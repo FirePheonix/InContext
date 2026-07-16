@@ -29,6 +29,16 @@ export type CreateCommitIntentInput = {
   tokenLabel?: string;
 };
 
+export type RecordProjectCommitInput = {
+  branch?: string;
+  commitSha?: string;
+  errorMessage?: string;
+  files?: string[];
+  message: string;
+  pullRequestUrl?: string;
+  status: "FAILED" | "QUEUED" | "SUCCEEDED";
+};
+
 const DEFAULT_OWNER_EMAIL = "owner@incontext.local";
 const DEFAULT_OWNER_NAME = "InContext Owner";
 
@@ -361,4 +371,56 @@ export async function createCommitIntent(slug: string, input: CreateCommitIntent
       filesJson: JSON.stringify(input.files ?? []),
     },
   });
+}
+
+export async function recordProjectCommit(slug: string, input: RecordProjectCommitInput, actorId?: string) {
+  const project = await prisma.project.findFirst({
+    where: {
+      slug,
+      ...(buildProjectAccessWhere(actorId) ?? {}),
+    },
+  });
+
+  if (!project) {
+    throw new Error("Project not found.");
+  }
+
+  const actor = actorId ? await prisma.user.findUnique({ where: { id: actorId } }) : await getOrCreateOwner();
+  const fallbackActor = actor ?? (await getOrCreateOwner());
+  const message = input.message.trim();
+
+  if (!message) {
+    throw new Error("Commit message is required.");
+  }
+
+  const commit = await prisma.commitLog.create({
+    data: {
+      projectId: project.id,
+      actorId: fallbackActor.id,
+      branch: input.branch?.trim() || project.defaultBranch,
+      message,
+      status: input.status,
+      filesJson: JSON.stringify(input.files ?? []),
+      commitSha: input.commitSha?.trim() || null,
+      pullRequestUrl: input.pullRequestUrl?.trim() || null,
+      errorMessage: input.errorMessage?.trim() || null,
+    },
+  });
+
+  await prisma.auditEvent.create({
+    data: {
+      userId: fallbackActor.id,
+      projectId: project.id,
+      action: "project.commit_recorded",
+      targetType: "commit_log",
+      targetId: commit.id,
+      detailJson: JSON.stringify({
+        branch: commit.branch,
+        commitSha: commit.commitSha,
+        status: commit.status,
+      }),
+    },
+  });
+
+  return commit;
 }

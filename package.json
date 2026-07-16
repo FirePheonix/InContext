@@ -2,6 +2,9 @@
   "name": "incontext",
   "version": "2.2.0",
   "private": true,
+  "bin": {
+    "incontext": "./bin/incontext.mjs"
+  },
   "engines": {
     "node": "22.x"
   },
@@ -20,6 +23,8 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "cli": "node ./bin/incontext.mjs",
+    "cli:mcp": "node ./bin/incontext.mjs mcp serve",
     "mcp:server": "tsx src/mcp/server.ts",
     "mcp:http": "tsx src/mcp/http-server.ts"
   },
