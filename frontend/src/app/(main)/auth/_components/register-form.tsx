@@ -21,7 +21,7 @@ const formSchema = z
   });
 
 function onSubmit(data: z.infer<typeof formSchema>) {
-  toast("You submitted the following values", {
+  toast("Email/password registration is not enabled in this scaffold", {
     description: (
       <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
         <code className="text-white">{JSON.stringify(data, null, 2)}</code>
@@ -99,7 +99,7 @@ export function RegisterForm() {
         />
       </FieldGroup>
       <Button className="w-full" type="submit">
-        Register
+        Email Registration Coming Later
       </Button>
     </form>
   );

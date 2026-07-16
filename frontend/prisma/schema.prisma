@@ -1,0 +1,244 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum ProjectRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum SummaryKind {
+  GOAL
+  PROGRESS
+  HANDOFF
+  DECISION
+}
+
+enum DocumentKind {
+  OVERVIEW
+  ARCHITECTURE
+  API
+  DATA_MODEL
+  RUNBOOK
+}
+
+enum AgentKind {
+  CODEX
+  CLAUDE
+  CURSOR
+  OTHER
+}
+
+enum TokenKind {
+  GITHUB_APP
+  PERSONAL_ACCESS_TOKEN
+  OAUTH
+  SERVICE_ACCOUNT
+}
+
+enum CommitStatus {
+  QUEUED
+  SUCCEEDED
+  FAILED
+  REVOKED
+}
+
+model User {
+  id               String            @id @default(cuid())
+  name             String?
+  email            String?           @unique
+  emailVerified    DateTime?
+  image            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  accounts         Account[]
+  sessions         Session[]
+  ownedProjects    Project[]         @relation("ProjectOwner")
+  memberships      ProjectMember[]
+  summaries        ProjectSummary[]
+  documents        ArchitectureDocument[]
+  agentConnections AgentConnection[]
+  accessTokens     AccessToken[]
+  commitLogs       CommitLog[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Project {
+  id                String                 @id @default(cuid())
+  name              String
+  slug              String                 @unique
+  description       String?
+  status            ProjectStatus          @default(DRAFT)
+  repoUrl           String?
+  defaultBranch     String                 @default("main")
+  contextPath       String?
+  architecturePath  String?
+  createdById       String
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  createdBy         User                   @relation("ProjectOwner", fields: [createdById], references: [id], onDelete: Cascade)
+  memberships       ProjectMember[]
+  summaries         ProjectSummary[]
+  documents         ArchitectureDocument[]
+  agentConnections  AgentConnection[]
+  accessTokens      AccessToken[]
+  commitLogs        CommitLog[]
+}
+
+model ProjectMember {
+  id        String      @id @default(cuid())
+  projectId String
+  userId    String
+  role      ProjectRole @default(MEMBER)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+}
+
+model ProjectSummary {
+  id            String      @id @default(cuid())
+  projectId     String
+  authorId      String?
+  title         String
+  kind          SummaryKind @default(PROGRESS)
+  content       String
+  sourceSession String?
+  isPinned      Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, kind])
+}
+
+model ArchitectureDocument {
+  id            String       @id @default(cuid())
+  projectId     String
+  authorId      String?
+  title         String
+  kind          DocumentKind @default(ARCHITECTURE)
+  path          String?
+  content       String
+  checksum      String?
+  lastIndexedAt DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, kind])
+}
+
+model AgentConnection {
+  id           String    @id @default(cuid())
+  projectId    String
+  userId       String?
+  agent        AgentKind
+  label        String
+  configJson   String?
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model AccessToken {
+  id           String    @id @default(cuid())
+  projectId    String
+  ownerId      String?
+  label        String
+  provider     String
+  kind         TokenKind
+  scopes       String
+  hashedSecret String
+  lastUsedAt   DateTime?
+  expiresAt    DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner   User?   @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  commitLogs CommitLog[]
+
+  @@index([projectId, kind])
+}
+
+model CommitLog {
+  id             String       @id @default(cuid())
+  projectId      String
+  tokenId        String?
+  actorId        String?
+  branch         String
+  message        String
+  status         CommitStatus @default(QUEUED)
+  filesJson      String?
+  commitSha      String?
+  pullRequestUrl String?
+  errorMessage   String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  project Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  token   AccessToken? @relation(fields: [tokenId], references: [id], onDelete: SetNull)
+  actor   User?       @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, status])
+}
