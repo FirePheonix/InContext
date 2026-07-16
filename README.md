@@ -1,15 +1,17 @@
 # InContext
 
-InContext is a project-native memory and execution layer for coding agents. It gives Codex, Claude, Cursor, or any MCP-compatible client a shared project registry, portable summaries, architecture context, scoped write access, and auditable commit intents.
+InContext is a project-native memory and execution layer for coding agents. It gives Codex, Claude, Cursor, or any MCP-compatible client a shared project registry, portable summaries, architecture context, local resume hashes, local git-backed execution, and auditable commit history.
 
 ## What is implemented
 
 - Google OAuth with Auth.js and Prisma
+- GitHub OAuth support for browser and CLI login
 - Multi-project registry with per-project ownership and memberships
 - Prisma-backed dashboards for project context, infrastructure, and access scopes
 - Project APIs for listing projects, reading context, creating summaries, and queueing commit intents
 - MCP stdio server with project/context tools
 - Direct local git commit execution for queued intents, gated by env flags and per-project settings
+- Local `incontext` CLI with browser login, project linking, handoff save, resume hashes, and local MCP mode
 
 ## Stack
 
@@ -52,7 +54,13 @@ npm run dev
 npm run mcp:server
 ```
 
-6. Or run the deployable MCP HTTP server
+6. Or use the local CLI-first workflow
+
+```bash
+npm run cli -- help
+```
+
+7. Or run the deployable MCP HTTP server
 
 ```bash
 npm run mcp:http
@@ -66,6 +74,8 @@ Put these in `.env`:
 DATABASE_URL="postgresql://app_user:app_password@your-pooled-host/incontext?schema=public"
 DIRECT_URL="postgresql://app_user:app_password@your-direct-host/incontext?schema=public"
 AUTH_SECRET="replace-with-a-long-random-secret"
+AUTH_GITHUB_ID="your-github-oauth-client-id"
+AUTH_GITHUB_SECRET="your-github-oauth-client-secret"
 AUTH_GOOGLE_ID="your-google-oauth-client-id"
 AUTH_GOOGLE_SECRET="your-google-oauth-client-secret"
 AUTH_TRUST_HOST="true"
@@ -83,15 +93,59 @@ Use:
 
 If your provider only gives you one PostgreSQL URL, you can set both values to the same connection string.
 
-## Google OAuth setup
+## OAuth setup
 
-Use a Google OAuth web app and add this callback URL:
+Use a GitHub or Google OAuth app.
+
+Google callback:
 
 ```text
 http://localhost:3000/api/auth/callback/google
 ```
 
-If you deploy this, use the deployed host with the same callback path.
+GitHub callback:
+
+```text
+http://localhost:3000/api/auth/callback/github
+```
+
+If you deploy this, use the deployed host with the same callback paths.
+
+## CLI workflow
+
+The preferred individual-user workflow is:
+
+1. Login from terminal:
+
+```bash
+incontext login --app-url https://your-vercel-domain
+```
+
+2. Link the current repo:
+
+```bash
+incontext project link your-project-slug
+```
+
+3. Save a handoff:
+
+```bash
+incontext handoff save --title "Session handoff" --content "..."
+```
+
+4. Resume later:
+
+```bash
+incontext resume <hash>
+```
+
+5. Start the local MCP bridge for agents:
+
+```bash
+incontext mcp serve
+```
+
+See [CLI.md](./CLI.md) for the full local workflow.
 
 ## MCP server
 
@@ -116,6 +170,15 @@ Available MCP capabilities:
 - `add_project_summary`
 - `queue_commit_intent`
 - `execute_commit_intent`
+
+The local `incontext mcp serve` command also exposes:
+
+- `get_current_project`
+- `resume_project`
+- `add_handoff`
+- `update_progress`
+- `record_decision`
+- `commit_and_push`
 
 It also exposes:
 
@@ -157,7 +220,7 @@ This is intentionally strict. It is designed to be auditable and harder to misus
 Recommended production split:
 
 1. Vercel for the frontend app
-2. Railway for the MCP HTTP server
+2. Railway for the optional hosted MCP HTTP server
 3. Neon for PostgreSQL
 
 Both deployments should share the same PostgreSQL database.

@@ -1,9 +1,14 @@
 # Deploy InContext
 
-InContext is deployed as two services from this repository root:
+InContext can run in two modes:
+
+- local CLI + local MCP for individual-user workflows
+- Vercel + Railway + Neon for hosted app plus optional hosted HTTP MCP
+
+Hosted deployment from this repository root is:
 
 - Vercel runs the Next.js app
-- Railway runs the MCP HTTP server
+- Railway runs the optional MCP HTTP server
 - Neon provides the shared PostgreSQL database
 
 Do not set a nested root directory on either platform. The repository root is the app root.
@@ -41,6 +46,8 @@ Set these environment variables in Vercel:
 DATABASE_URL="your_neon_pooled_url"
 DIRECT_URL="your_neon_direct_url"
 AUTH_SECRET="your-auth-secret"
+AUTH_GITHUB_ID="your-github-client-id"
+AUTH_GITHUB_SECRET="your-github-client-secret"
 AUTH_GOOGLE_ID="your-google-client-id"
 AUTH_GOOGLE_SECRET="your-google-client-secret"
 AUTH_TRUST_HOST="true"
@@ -53,14 +60,17 @@ DIRECT_GIT_COMMITS_ENABLED="false"
 prisma generate && prisma migrate deploy && next build
 ```
 
-## 3. Google OAuth
+## 3. OAuth providers
 
-In Google Cloud, create a Web application OAuth client.
-
-Authorized redirect URIs:
+GitHub OAuth callback:
 
 ```text
-http://localhost:3000/api/auth/callback/google
+https://your-vercel-domain/api/auth/callback/github
+```
+
+Google OAuth callback:
+
+```text
 https://your-vercel-domain/api/auth/callback/google
 ```
 
@@ -127,17 +137,23 @@ Default:
 DIRECT_GIT_COMMITS_ENABLED="false"
 ```
 
-The current git bridge executes against local repositories on disk. It is not yet GitHub push or PR automation.
+The hosted MCP service is optional. Individual-user workflows should prefer the local CLI command:
+
+```bash
+incontext mcp serve
+```
+
+That local MCP server reads hosted project context but executes git on the user's own machine.
 
 ## 7. Deployment order
 
 1. Create the Neon database.
 2. Add Vercel environment variables.
 3. Deploy the Vercel app.
-4. Add the Vercel callback URI in Google OAuth.
+4. Add the Vercel callback URI in GitHub and/or Google OAuth.
 5. Add Railway environment variables.
 6. Deploy the Railway MCP service.
-7. Test Google sign-in on the Vercel domain.
+7. Test browser sign-in on the Vercel domain.
 8. Test Railway `/health`.
 9. Test an authenticated MCP request to Railway `/mcp`.
 

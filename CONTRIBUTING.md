@@ -8,6 +8,7 @@ The repository root is the application root. Do not introduce a separate `fronte
 
 - Multi-project context storage for summaries, architecture notes, agent connections, and commit history
 - Cross-agent access through MCP tools and resources
+- Local CLI auth, resume hashes, and project linking for individual users
 - Scoped write paths for repo-linked projects
 - Dashboard surfaces for project health, handoffs, and access control
 
@@ -45,7 +46,13 @@ npm run dev
 npm run mcp:server
 ```
 
-7. For HTTP transport testing, run the MCP HTTP server.
+7. For the local CLI-first flow, inspect the command surface.
+
+```bash
+npm run cli -- help
+```
+
+8. For HTTP transport testing, run the MCP HTTP server.
 
 ```bash
 npm run mcp:http
@@ -64,11 +71,12 @@ src/
   config/                  app metadata and runtime-safe config
   lib/                     Prisma access, project services, auth helpers, git bridge
   mcp/                     stdio and HTTP MCP server entrypoints
+  cli/                     local CLI and local MCP bridge runtime
   navigation/              sidebar and shell navigation definitions
   server/                  server actions and preference handling
   types/                   shared type augmentation
 prisma/
-  schema.prisma            PostgreSQL data model for users, projects, summaries, tokens, and commits
+  schema.prisma            PostgreSQL data model for users, projects, summaries, CLI devices, resume points, tokens, and commits
 ```
 
 ## Contribution workflow
