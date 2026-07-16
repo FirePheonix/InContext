@@ -73,6 +73,11 @@ model User {
   agentConnections AgentConnection[]
   accessTokens     AccessToken[]
   commitLogs       CommitLog[]
+  cliDevices       CliDevice[]
+  cliSessions      CliSession[]
+  resumePoints     ResumePoint[]
+  projectLinks     ProjectLink[]
+  auditEvents      AuditEvent[]
 }
 
 model Account {
@@ -133,6 +138,9 @@ model Project {
   agentConnections  AgentConnection[]
   accessTokens      AccessToken[]
   commitLogs        CommitLog[]
+  resumePoints      ResumePoint[]
+  projectLinks      ProjectLink[]
+  auditEvents       AuditEvent[]
 }
 
 model ProjectMember {
@@ -243,4 +251,102 @@ model CommitLog {
   actor   User?       @relation(fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([projectId, status])
+}
+
+model CliDevice {
+  id          String       @id @default(cuid())
+  userId      String
+  label       String
+  platform    String?
+  hostname    String?
+  lastSeenAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions    CliSession[]
+  projectLinks ProjectLink[]
+  auditEvents AuditEvent[]
+
+  @@index([userId, updatedAt])
+}
+
+model CliSession {
+  id          String      @id @default(cuid())
+  userId      String
+  deviceId    String
+  tokenHash   String      @unique
+  tokenHint   String
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device      CliDevice   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  auditEvents AuditEvent[]
+
+  @@index([userId, updatedAt])
+}
+
+model ResumePoint {
+  id               String   @id @default(cuid())
+  projectId        String
+  authorId         String
+  hash             String   @unique
+  title            String
+  content          String
+  branch           String?
+  summaryIdsJson   String?
+  documentIdsJson  String?
+  sourceSession    String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+}
+
+model ProjectLink {
+  id            String    @id @default(cuid())
+  projectId     String
+  userId        String
+  deviceId      String?
+  repoRoot      String
+  repoRemoteUrl String?
+  branch        String?
+  isActive      Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device  CliDevice? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  @@index([userId, updatedAt])
+  @@unique([userId, repoRoot])
+}
+
+model AuditEvent {
+  id          String      @id @default(cuid())
+  userId      String
+  projectId   String?
+  deviceId    String?
+  cliSessionId String?
+  action      String
+  targetType  String?
+  targetId    String?
+  detailJson  String?
+  createdAt   DateTime    @default(now())
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project    Project?    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  device     CliDevice?  @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+  cliSession CliSession? @relation(fields: [cliSessionId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([projectId, createdAt])
 }
