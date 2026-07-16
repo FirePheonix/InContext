@@ -99,6 +99,43 @@ This restores the active project locally and prints the saved handoff plus recen
 incontext mcp serve
 ```
 
+## Copyable MCP configs
+
+Use this for Codex, Claude Code, or Cursor with `npx`:
+
+```json
+{
+  "mcpServers": {
+    "incontext": {
+      "command": "npx",
+      "args": ["incontext-cli", "mcp", "serve"]
+    }
+  }
+}
+```
+
+If `incontext-cli` is installed globally:
+
+```json
+{
+  "mcpServers": {
+    "incontext": {
+      "command": "incontext",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```
+
+Recommended first-run sequence:
+
+```bash
+npx incontext-cli login --app-url https://your-vercel-domain
+npx incontext-cli projects
+npx incontext-cli project link <your-project-slug>
+npx incontext-cli mcp serve
+```
+
 ## Local MCP tools
 
 The local MCP server exposes:

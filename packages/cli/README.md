@@ -51,3 +51,31 @@ incontext mcp serve
 3. Save handoffs and resume via hashes.
 4. Start `incontext mcp serve`.
 5. Point Codex, Claude, Cursor, or another stdio MCP client at the local process.
+
+## Copyable MCP config
+
+Use this for Codex, Claude Code, or Cursor:
+
+```json
+{
+  "mcpServers": {
+    "incontext": {
+      "command": "npx",
+      "args": ["incontext-cli", "mcp", "serve"]
+    }
+  }
+}
+```
+
+If installed globally:
+
+```json
+{
+  "mcpServers": {
+    "incontext": {
+      "command": "incontext",
+      "args": ["mcp", "serve"]
+    }
+  }
+}
+```

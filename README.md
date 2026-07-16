@@ -158,6 +158,19 @@ The CLI source and package metadata live in [packages/cli](./packages/cli). That
 
 The package is now published on npm as `incontext-cli`.
 
+Copyable MCP config for Codex, Claude Code, or Cursor:
+
+```json
+{
+  "mcpServers": {
+    "incontext": {
+      "command": "npx",
+      "args": ["incontext-cli", "mcp", "serve"]
+    }
+  }
+}
+```
+
 ## MCP server
 
 The local stdio MCP entrypoint is:
