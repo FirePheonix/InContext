@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import type { Prisma } from "@prisma/client";
 
 import type { Role } from "@/app/(main)/dashboard/roles/_components/roles-table/data";
+import { buildProjectAccessWhere, ensureWorkspaceAccessForUser } from "@/lib/project-access";
 import { ensureProjectBootstrapData } from "@/lib/project-bootstrap";
 import { prisma } from "@/lib/prisma";
 
@@ -107,10 +108,15 @@ function buildBuiltInAgentRoles(projects: GovernedProject[]): Role[] {
     .filter((role): role is Role => Boolean(role));
 }
 
-export async function getAccessGovernanceData(): Promise<Role[]> {
+export async function getAccessGovernanceData(actorId?: string): Promise<Role[]> {
   await ensureProjectBootstrapData();
 
+  if (actorId) {
+    await ensureWorkspaceAccessForUser(actorId);
+  }
+
   const projects = await prisma.project.findMany({
+    where: buildProjectAccessWhere(actorId),
     orderBy: { updatedAt: "desc" },
     include: {
       agentConnections: {

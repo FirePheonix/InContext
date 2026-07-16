@@ -1,3 +1,4 @@
+import { requireCurrentSessionUser } from "@/lib/session-user";
 import { getProductivityDashboardData } from "@/lib/productivity";
 
 import { CalendarPanel } from "./_components/calendar-panel";
@@ -11,7 +12,8 @@ import { TasksSection } from "./_components/tasks-section";
 import { WeeklySummaryCard } from "./_components/weekly-summary-card";
 
 export default async function Page() {
-  const dashboard = await getProductivityDashboardData();
+  const user = await requireCurrentSessionUser();
+  const dashboard = await getProductivityDashboardData(user.id);
 
   return (
     <div className="grid gap-6 lg:grid-cols-12">

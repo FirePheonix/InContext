@@ -1,14 +1,20 @@
 import { formatDistanceToNow } from "date-fns";
 
+import { buildProjectAccessWhere, ensureWorkspaceAccessForUser } from "@/lib/project-access";
 import { ensureProjectBootstrapData } from "@/lib/project-bootstrap";
 import { prisma } from "@/lib/prisma";
 
 import type { ProjectRow } from "@/app/(main)/dashboard/users/_components/data";
 
-export async function getProjectRows(): Promise<ProjectRow[]> {
+export async function getProjectRows(actorId?: string): Promise<ProjectRow[]> {
   await ensureProjectBootstrapData();
 
+  if (actorId) {
+    await ensureWorkspaceAccessForUser(actorId);
+  }
+
   const projects = await prisma.project.findMany({
+    where: buildProjectAccessWhere(actorId),
     orderBy: { updatedAt: "desc" },
     include: {
       createdBy: true,

@@ -3,6 +3,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { ensureWorkspaceAccessForUser } from "@/lib/project-access";
 import { prisma } from "@/lib/prisma";
 
 export type SessionAppUser = {
@@ -34,6 +35,8 @@ export const getCurrentSessionUser = cache(async (): Promise<SessionAppUser | nu
   if (!user?.email) {
     return null;
   }
+
+  await ensureWorkspaceAccessForUser(user.id);
 
   return {
     id: user.id,

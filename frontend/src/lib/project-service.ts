@@ -1,3 +1,4 @@
+import { buildProjectAccessWhere } from "@/lib/project-access";
 import { ensureProjectBootstrapData } from "@/lib/project-bootstrap";
 import { prisma } from "@/lib/prisma";
 
@@ -109,10 +110,11 @@ export async function createProject(input: CreateProjectInput, actorId?: string)
   });
 }
 
-export async function getProjectRegistry() {
+export async function getProjectRegistry(actorId?: string) {
   await ensureProjectBootstrapData();
 
   const projects = await prisma.project.findMany({
+    where: buildProjectAccessWhere(actorId),
     orderBy: { updatedAt: "desc" },
     include: {
       _count: {
@@ -140,11 +142,14 @@ export async function getProjectRegistry() {
   }));
 }
 
-export async function getProjectDetail(slug: string) {
+export async function getProjectDetail(slug: string, actorId?: string) {
   await ensureProjectBootstrapData();
 
-  const project = await prisma.project.findUnique({
-    where: { slug },
+  const project = await prisma.project.findFirst({
+    where: {
+      slug,
+      ...(buildProjectAccessWhere(actorId) ?? {}),
+    },
     include: {
       createdBy: true,
       memberships: {
@@ -273,8 +278,11 @@ export async function getProjectDetail(slug: string) {
 }
 
 export async function createProjectSummary(slug: string, input: CreateSummaryInput, actorId?: string) {
-  const project = await prisma.project.findUnique({
-    where: { slug },
+  const project = await prisma.project.findFirst({
+    where: {
+      slug,
+      ...(buildProjectAccessWhere(actorId) ?? {}),
+    },
   });
 
   if (!project) {
@@ -308,8 +316,11 @@ export async function createProjectSummary(slug: string, input: CreateSummaryInp
 }
 
 export async function createCommitIntent(slug: string, input: CreateCommitIntentInput, actorId?: string) {
-  const project = await prisma.project.findUnique({
-    where: { slug },
+  const project = await prisma.project.findFirst({
+    where: {
+      slug,
+      ...(buildProjectAccessWhere(actorId) ?? {}),
+    },
     include: {
       accessTokens: true,
     },

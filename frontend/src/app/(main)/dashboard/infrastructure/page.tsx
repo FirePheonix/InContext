@@ -1,10 +1,12 @@
 import { getInfrastructurePageData } from "@/lib/infrastructure";
+import { requireCurrentSessionUser } from "@/lib/session-user";
 
 import { InfrastructureHeader } from "./_components/infrastructure-header";
 import { ProjectEnvironments } from "./_components/project-environments";
 
 export default async function Page() {
-  const { groups, summary } = await getInfrastructurePageData();
+  const user = await requireCurrentSessionUser();
+  const { groups, summary } = await getInfrastructurePageData(user.id);
 
   return (
     <div className="flex flex-col gap-4">

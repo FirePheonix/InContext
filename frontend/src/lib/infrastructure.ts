@@ -7,6 +7,7 @@ import type {
   InfrastructureGroup,
   InfrastructureSummary,
 } from "@/app/(main)/dashboard/infrastructure/_components/infrastructure-data";
+import { buildProjectAccessWhere, ensureWorkspaceAccessForUser } from "@/lib/project-access";
 import { ensureProjectBootstrapData } from "@/lib/project-bootstrap";
 import { prisma } from "@/lib/prisma";
 
@@ -97,13 +98,18 @@ function buildContextRow(project: InfrastructureProject): InfrastructureEnvironm
   };
 }
 
-export async function getInfrastructurePageData(): Promise<{
+export async function getInfrastructurePageData(actorId?: string): Promise<{
   groups: InfrastructureGroup[];
   summary: InfrastructureSummary;
 }> {
   await ensureProjectBootstrapData();
 
+  if (actorId) {
+    await ensureWorkspaceAccessForUser(actorId);
+  }
+
   const projects = await prisma.project.findMany({
+    where: buildProjectAccessWhere(actorId),
     orderBy: { updatedAt: "desc" },
     include: {
       summaries: {

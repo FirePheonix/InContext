@@ -10,7 +10,7 @@ export async function GET() {
     return unauthorizedJson();
   }
 
-  const projects = await getProjectRegistry();
+  const projects = await getProjectRegistry(userId);
 
   return NextResponse.json({ projects });
 }

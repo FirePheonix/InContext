@@ -1,5 +1,6 @@
 import { differenceInDays, formatDistanceToNow, isToday, isYesterday } from "date-fns";
 
+import { buildProjectAccessWhere, ensureWorkspaceAccessForUser } from "@/lib/project-access";
 import { ensureProjectBootstrapData } from "@/lib/project-bootstrap";
 import { prisma } from "@/lib/prisma";
 
@@ -57,10 +58,15 @@ function buildProjectProgress(args: {
   return Math.min(statusBoost + summaryScore + documentScore + writeScore, 100);
 }
 
-export async function getProductivityDashboardData(): Promise<ProductivityDashboardData> {
+export async function getProductivityDashboardData(actorId?: string): Promise<ProductivityDashboardData> {
   await ensureProjectBootstrapData();
 
+  if (actorId) {
+    await ensureWorkspaceAccessForUser(actorId);
+  }
+
   const projects = await prisma.project.findMany({
+    where: buildProjectAccessWhere(actorId),
     orderBy: { updatedAt: "desc" },
     include: {
       summaries: {
