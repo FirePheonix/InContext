@@ -1,4 +1,4 @@
-# @incontext/cli
+# incontext-cli
 
 Local CLI and MCP bridge for InContext.
 
@@ -22,6 +22,13 @@ Future published usage:
 
 ```bash
 npx incontext-cli help
+```
+
+Global install from npm:
+
+```bash
+npm install -g incontext-cli
+incontext help
 ```
 
 ## Core commands

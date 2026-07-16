@@ -2,7 +2,7 @@
 
 The local CLI is the primary workflow for an individual user. It stores the active project on the machine, opens browser login against the hosted app, and runs a local MCP server for Codex, Claude, Cursor, or any stdio MCP client.
 
-The CLI package now lives in [packages/cli](./packages/cli).
+The CLI package now lives in [packages/cli](./packages/cli) and is published on npm as `incontext-cli`.
 
 ## Install
 
@@ -24,6 +24,13 @@ Future publishable / agent-friendly shape:
 
 ```bash
 npx incontext-cli help
+```
+
+Global install from npm:
+
+```bash
+npm install -g incontext-cli
+incontext help
 ```
 
 ## Commands

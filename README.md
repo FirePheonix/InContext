@@ -156,6 +156,8 @@ See [CLI.md](./CLI.md) for the full local workflow.
 
 The CLI source and package metadata live in [packages/cli](./packages/cli). That package is shaped for future `npx incontext-cli ...` usage, while repo-local development uses `npm run cli -- ...` or `npm run cli:link`.
 
+The package is now published on npm as `incontext-cli`.
+
 ## MCP server
 
 The local stdio MCP entrypoint is:
