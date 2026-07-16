@@ -1,6 +1,8 @@
-import { users } from "./_components/data";
 import { Users } from "./_components/users";
+import { getProjectRows } from "@/lib/projects";
 
-export default function Page() {
-  return <Users users={users} />;
+export default async function Page() {
+  const projects = await getProjectRows();
+
+  return <Users users={projects} />;
 }
