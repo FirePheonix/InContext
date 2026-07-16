@@ -16,16 +16,8 @@ type Task = {
   checked: boolean;
 };
 
-const tasks: Task[] = [
-  { title: "Backfill architecture summary for frontend-dashboard", tag: "Architecture", time: "10:00 AM", checked: false },
-  { title: "Normalize Claude session transcripts into project memory", tag: "Ingestion", time: "11:30 AM", checked: true },
-  { title: "Define project creation flow for new MCP clients", tag: "Platform", time: "2:00 PM", checked: false },
-  { title: "Review git write scope for vedaai-backend token", tag: "Security", time: "4:30 PM", checked: false },
-  { title: "Publish handoff summary for reference-mcp", tag: "Handoff", time: "6:00 PM", checked: false },
-];
-
-export function TasksSection() {
-  const [items, setItems] = React.useState(tasks);
+export function TasksSection({ initialItems }: { initialItems: Task[] }) {
+  const [items, setItems] = React.useState(initialItems);
 
   return (
     <section className="flex flex-col gap-2">

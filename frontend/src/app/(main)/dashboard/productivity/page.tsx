@@ -1,3 +1,5 @@
+import { getProductivityDashboardData } from "@/lib/productivity";
+
 import { CalendarPanel } from "./_components/calendar-panel";
 import { FocusCard } from "./_components/focus-card";
 import { ProjectsSection } from "./_components/projects-section";
@@ -8,7 +10,9 @@ import { SummaryCards } from "./_components/summary-cards";
 import { TasksSection } from "./_components/tasks-section";
 import { WeeklySummaryCard } from "./_components/weekly-summary-card";
 
-export default function Page() {
+export default async function Page() {
+  const dashboard = await getProductivityDashboardData();
+
   return (
     <div className="grid gap-6 lg:grid-cols-12">
       <section className="lg:col-span-9">
@@ -20,9 +24,9 @@ export default function Page() {
               Claude, Cursor, and repo automation.
             </p>
           </div>
-          <SummaryCards />
-          <TasksSection />
-          <ProjectsSection />
+          <SummaryCards items={dashboard.summaryCards} />
+          <TasksSection initialItems={dashboard.tasks} />
+          <ProjectsSection projects={dashboard.highlights} />
           <QuickActions />
           <QuoteCard />
         </div>
@@ -31,7 +35,7 @@ export default function Page() {
       <section className="flex flex-col gap-6 lg:col-span-3">
         <CalendarPanel />
         <FocusCard />
-        <RecentNotesCard />
+        <RecentNotesCard notes={dashboard.notes} />
         <WeeklySummaryCard />
       </section>
     </div>
