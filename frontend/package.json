@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "postinstall": "prisma generate",
     "lint": "biome lint",
     "format": "biome format --write",
     "check": "biome check",
@@ -15,7 +16,9 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "mcp:server": "tsx src/mcp/server.ts"
+    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "mcp:server": "tsx src/mcp/server.ts",
+    "mcp:http": "tsx src/mcp/http-server.ts"
   },
   "lint-staged": {
     "*.{js,ts,jsx,tsx}": [
@@ -71,6 +74,7 @@
     "@biomejs/biome": "^2.5.3",
     "@tailwindcss/postcss": "^4.3.2",
     "@types/d3-geo": "^3.1.0",
+    "@types/express": "^5.0.6",
     "@types/node": "^22.20.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

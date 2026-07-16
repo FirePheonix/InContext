@@ -52,6 +52,12 @@ npm run dev
 npm run mcp:server
 ```
 
+6. Or run the deployable MCP HTTP server
+
+```bash
+npm run mcp:http
+```
+
 ## Required envs
 
 Put these in `frontend/.env`:
@@ -64,6 +70,7 @@ AUTH_GOOGLE_SECRET="your-google-oauth-client-secret"
 AUTH_TRUST_HOST="true"
 DIRECT_GIT_COMMITS_ENABLED="false"
 GIT_PROJECTS_ROOT="E:\\context-git"
+MCP_PORT="8787"
 ```
 
 ## Google OAuth setup
@@ -78,10 +85,16 @@ If you deploy this, use the deployed host with the same callback path.
 
 ## MCP server
 
-The MCP server entrypoint is:
+The local stdio MCP entrypoint is:
 
 ```text
 src/mcp/server.ts
+```
+
+The deployable HTTP MCP entrypoint is:
+
+```text
+src/mcp/http-server.ts
 ```
 
 Available MCP capabilities:
@@ -123,6 +136,29 @@ Queued commit intents can be executed against a local repository only when all o
 - the queued intent includes explicit relative file paths
 
 This is intentionally strict. It is designed to be auditable and harder to misuse.
+
+## Recommended deployment layout
+
+Use two deployments:
+
+1. Frontend app
+   Deploy the Next.js app to Vercel.
+
+2. MCP + git bridge service
+   Deploy the HTTP MCP server on a long-running Node host where git is installed and local repos can exist on disk.
+
+Good examples are Railway, Render, Fly.io, or your own VPS.
+
+The frontend and the MCP server should share the same database.
+
+## Vercel build
+
+This repo includes:
+
+```text
+postinstall = prisma generate
+vercel-build = prisma generate && prisma migrate deploy && next build
+```
 
 ## Current limitations
 
