@@ -1,13 +1,21 @@
 import Link from "next/link";
 
 import { Globe } from "lucide-react";
+import { redirect } from "next/navigation";
 
+import { auth } from "@/auth";
 import { APP_CONFIG } from "@/config/app-config";
 
 import { RegisterForm } from "../../_components/register-form";
 import { GoogleButton } from "../../_components/social-auth/google-button";
 
-export default function RegisterV2() {
+export default async function RegisterV2() {
+  const session = await auth();
+
+  if (session?.user?.id) {
+    redirect("/dashboard");
+  }
+
   return (
     <>
       <div className="mx-auto flex w-full flex-col justify-center space-y-8 sm:w-[350px]">

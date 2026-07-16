@@ -2,10 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 
+import { auth } from "@/auth";
 import { createProject, type CreateProjectInput } from "@/lib/project-service";
 
 export async function createProjectAction(input: CreateProjectInput) {
-  const project = await createProject(input);
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    throw new Error("You must sign in before creating a project.");
+  }
+
+  const project = await createProject(input, session.user.id);
 
   revalidatePath("/dashboard/users");
   revalidatePath("/dashboard/productivity");

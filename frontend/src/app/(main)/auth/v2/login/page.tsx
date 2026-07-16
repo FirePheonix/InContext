@@ -1,13 +1,21 @@
 import Link from "next/link";
 
 import { Globe } from "lucide-react";
+import { redirect } from "next/navigation";
 
+import { auth } from "@/auth";
 import { APP_CONFIG } from "@/config/app-config";
 
 import { LoginForm } from "../../_components/login-form";
 import { GoogleButton } from "../../_components/social-auth/google-button";
 
-export default function LoginV2() {
+export default async function LoginV2() {
+  const session = await auth();
+
+  if (session?.user?.id) {
+    redirect("/dashboard");
+  }
+
   return (
     <>
       <div className="mx-auto flex w-full flex-col justify-center space-y-8 sm:w-[350px]">
