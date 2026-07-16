@@ -19,6 +19,13 @@ export type CreateSummaryInput = {
   title: string;
 };
 
+export type CreateCommitIntentInput = {
+  branch?: string;
+  files?: string[];
+  message: string;
+  tokenLabel?: string;
+};
+
 const DEFAULT_OWNER_EMAIL = "owner@contexthub.local";
 const DEFAULT_OWNER_NAME = "Context Hub Owner";
 
@@ -296,6 +303,43 @@ export async function createProjectSummary(slug: string, input: CreateSummaryInp
       content,
       sourceSession: input.sourceSession?.trim() || null,
       isPinned: input.isPinned ?? false,
+    },
+  });
+}
+
+export async function createCommitIntent(slug: string, input: CreateCommitIntentInput, actorId?: string) {
+  const project = await prisma.project.findUnique({
+    where: { slug },
+    include: {
+      accessTokens: true,
+    },
+  });
+
+  if (!project) {
+    throw new Error("Project not found.");
+  }
+
+  const actor = actorId ? await prisma.user.findUnique({ where: { id: actorId } }) : await getOrCreateOwner();
+  const fallbackActor = actor ?? (await getOrCreateOwner());
+  const message = input.message.trim();
+
+  if (!message) {
+    throw new Error("Commit message is required.");
+  }
+
+  const token = input.tokenLabel
+    ? project.accessTokens.find((candidate) => candidate.label === input.tokenLabel) ?? null
+    : project.accessTokens[0] ?? null;
+
+  return prisma.commitLog.create({
+    data: {
+      projectId: project.id,
+      tokenId: token?.id ?? null,
+      actorId: fallbackActor.id,
+      branch: input.branch?.trim() || project.defaultBranch,
+      message,
+      status: "QUEUED",
+      filesJson: JSON.stringify(input.files ?? []),
     },
   });
 }
