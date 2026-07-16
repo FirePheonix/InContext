@@ -1,141 +1,143 @@
-# Next.js Admin Template with TypeScript & Shadcn UI
+# Context Hub
 
-**Studio Admin** - Includes multiple dashboards, authentication layouts, customizable theme presets, and more.
+Context Hub is a project-native memory and execution layer for coding agents. It gives Codex, Claude, Cursor, or any MCP-compatible client a shared project registry, portable summaries, architecture context, scoped write access, and auditable commit intents.
 
-<img src="https://github.com/arhamkhnz/next-shadcn-admin-dashboard/blob/main/media/dashboard.png?version=5" alt="Dashboard Screenshot">
+## What is implemented
 
-Most admin templates I found, free or paid, felt cluttered, outdated, or too rigid. I built this as a cleaner alternative with features often missing in others, such as theme toggling and layout controls, while keeping the design modern, minimal, and flexible.
+- Google OAuth with Auth.js and Prisma
+- Multi-project registry with per-project ownership and memberships
+- Prisma-backed dashboards for project context, infrastructure, and access scopes
+- Project APIs for listing projects, reading context, creating summaries, and queueing commit intents
+- MCP stdio server with project/context tools
+- Direct local git commit execution for queued intents, gated by env flags and per-project settings
 
-> **View demo:** [studio admin](https://next-shadcn-admin-dashboard.vercel.app)
+## Stack
 
-> [!NOTE]
-> Looking for the Base UI version? Check out [next-shadcn-admin-dashboard-baseui](https://github.com/arhamkhnz/next-shadcn-admin-dashboard-baseui).
->
-> Looking for the TanStack Start version? Check out [tanstack-shadcn-admin-dashboard](https://github.com/arhamkhnz/tanstack-shadcn-admin-dashboard).
+- Next.js 16
+- React 19
+- Prisma 7 + SQLite
+- Auth.js / NextAuth v5 beta
+- shadcn/ui
+- MCP TypeScript SDK
 
-> [!TIP]
-> I’m also working on Nuxt.js and Svelte versions of this dashboard. They’ll be live soon.
+## Local setup
 
-## Features
+1. Install dependencies
 
-- Built with Next.js 16, TypeScript, Tailwind CSS v4, and Shadcn UI  
-- Responsive and mobile-friendly  
-- Customizable theme presets (light/dark modes with color schemes like Tangerine, Brutalist, and more)  
-- Flexible layouts (collapsible sidebar, variable content widths)  
-- Authentication flows and screens  
-- Prebuilt dashboards (Default, CRM, Finance, Analytics, Productivity) plus legacy variants  
-- Role-Based Access Control (RBAC) with config-driven UI and multi-tenant support *(planned)*  
-
-> [!NOTE]
-> The default dashboard uses the **shadcn neutral** theme.  
-> It also includes additional color presets inspired by [Tweakcn](https://tweakcn.com):  
->
-> - Tangerine  
-> - Neo Brutalism  
-> - Soft Pop  
->
-> You can create more presets by following the same structure as the existing ones.
-
-> Looking for the **Next.js 15** version?  
-> Check out the [`archive/next15`](https://github.com/arhamkhnz/next-shadcn-admin-dashboard/tree/archive/next15) branch.  
-> This branch contains the setup prior to upgrading to Next 16 and the React Compiler.
-
-> Looking for the **Next.js 14 + Tailwind CSS v3** version?  
-> Check out the [`archive/next14-tailwindv3`](https://github.com/arhamkhnz/next-shadcn-admin-dashboard/tree/archive/next14-tailwindv3) branch.  
-> It has a different color theme and is not actively maintained, but I try to keep it updated with major changes.  
-
-## Tech Stack
-
-- **Framework**: Next.js 16 (App Router), TypeScript, Tailwind CSS v4  
-- **UI Components**: Shadcn UI  
-- **Validation**: Zod  
-- **Forms & State Management**: React Hook Form, Zustand  
-- **Tables & Data Handling**: TanStack Table  
-- **Tooling & DX**: Biome, Husky  
-
-## Screens
-
-### Available
-- Default Dashboard  
-- CRM Dashboard  
-- Finance Dashboard  
-- Analytics Dashboard  
-- Productivity Dashboard  
-- E-commerce Dashboard  
-- Academy Dashboard  
-- Logistics Dashboard  
-- Infrastructure Dashboard  
-- Chat Page  
-- Email Page  
-- Users Management  
-- Roles Management  
-- Kanban Board  
-- Tasks Page  
-- Invoice Page  
-- Calendar Page  
-- Authentication (4 screens)  
-- Legacy: Default v1, CRM v1, Finance v1, Analytics v1
-
-### Planned
-I’ve added all the planned screens. Feel free to open an issue for requesting something specific.
-
-## Colocation File System Architecture
-
-This project follows a **colocation-based architecture** each feature keeps its own pages, components, and logic inside its route folder.  
-Shared UI, hooks, and configuration live at the top level, making the codebase modular, scalable, and easier to maintain as the app grows.
-
-For a full breakdown of the structure with examples, see the [Next Colocation Template](https://github.com/arhamkhnz/next-colocation-template).
-
-## Getting Started
-
-You can run this project locally, or deploy it instantly with Vercel.
-
-### Deploy with Vercel
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Farhamkhnz%2Fnext-shadcn-admin-dashboard)
-
-_Deploy your own copy with one click._
-
-### Run locally
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/arhamkhnz/next-shadcn-admin-dashboard.git
-   ```
-   
-2. **Navigate into the project**
-   ```bash
-    cd next-shadcn-admin-dashboard
-   ```
-   
-3. **Install dependencies**
-   ```bash
-    npm install
-   ```
-
-4. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-Your app will be running at [http://localhost:3000](http://localhost:3000)
-
-### Formatting and Linting
-
-Format, lint, and organize imports
 ```bash
-npx @biomejs/biome check --write
+npm install
 ```
-> For more information on available rules, fixes, and CLI options, refer to the [Biome documentation](https://biomejs.dev/).
 
----
+2. Copy envs
 
-> [!IMPORTANT]  
-> This project is updated frequently. If you’re working from a fork or an older clone, pull the latest changes before syncing. Some updates may include breaking changes.
+```bash
+Copy-Item .env.example .env
+```
 
----
+3. Run Prisma migration if needed
 
-Contributions are welcome. Feel free to open issues, feature requests, or start a discussion.
+```bash
+npm run db:migrate
+```
 
+4. Start the app
 
-**Happy Vibe Coding!**
+```bash
+npm run dev
+```
+
+5. Start the MCP server in another terminal when needed
+
+```bash
+npm run mcp:server
+```
+
+## Required envs
+
+Put these in `frontend/.env`:
+
+```dotenv
+DATABASE_URL="file:./dev.db"
+AUTH_SECRET="replace-with-a-long-random-secret"
+AUTH_GOOGLE_ID="your-google-oauth-client-id"
+AUTH_GOOGLE_SECRET="your-google-oauth-client-secret"
+AUTH_TRUST_HOST="true"
+DIRECT_GIT_COMMITS_ENABLED="false"
+GIT_PROJECTS_ROOT="E:\\context-git"
+```
+
+## Google OAuth setup
+
+Use a Google OAuth web app and add this callback URL:
+
+```text
+http://localhost:3000/api/auth/callback/google
+```
+
+If you deploy this, use the deployed host with the same callback path.
+
+## MCP server
+
+The MCP server entrypoint is:
+
+```text
+src/mcp/server.ts
+```
+
+Available MCP capabilities:
+
+- `list_projects`
+- `get_project_detail`
+- `get_project_context`
+- `create_project`
+- `add_project_summary`
+- `queue_commit_intent`
+- `execute_commit_intent`
+
+It also exposes:
+
+- resource: `contexthub://projects`
+- prompt: `project-handoff`
+
+## Project APIs
+
+- `GET /api/projects`
+- `POST /api/projects`
+- `GET /api/projects/[slug]`
+- `GET /api/projects/[slug]/context`
+- `POST /api/projects/[slug]/summaries`
+- `POST /api/projects/[slug]/commits`
+- `POST /api/projects/[slug]/commits/[commitId]/execute`
+
+All project APIs now require an authenticated session.
+
+## Direct commit bridge
+
+Queued commit intents can be executed against a local repository only when all of these are true:
+
+- `DIRECT_GIT_COMMITS_ENABLED="true"`
+- `GIT_PROJECTS_ROOT` is set
+- the project has `repoLocalPath`
+- the project has `directCommitEnabled = true`
+- the queued intent targets the branch currently checked out in that repo
+- the queued intent includes explicit relative file paths
+
+This is intentionally strict. It is designed to be auditable and harder to misuse.
+
+## Current limitations
+
+- Token storage is scaffold-level, not production-grade secret vaulting
+- Direct commit execution is local-repo only, not remote GitHub push/PR automation
+- Password auth is still placeholder-only
+- Approval UI for queued commit execution is not built yet
+
+## Useful commands
+
+```bash
+npm run dev
+npm run build
+npm run db:migrate
+npm run db:generate
+npm run db:studio
+npm run mcp:server
+```
