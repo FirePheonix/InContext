@@ -77,6 +77,8 @@ Build: npm install
 Start: npm run mcp:http
 ```
 
+The repo also pins Node 22 for Railway via `package.json`, `.nvmrc`, and `nixpacks.toml`.
+
 Set these environment variables in Railway:
 
 ```dotenv
@@ -85,6 +87,8 @@ MCP_AUTH_TOKEN="generate-a-long-random-token"
 MCP_ALLOWED_ORIGINS="https://your-vercel-domain"
 DIRECT_GIT_COMMITS_ENABLED="false"
 ```
+
+Do not put `MCP_AUTH_TOKEN` into a Dockerfile, `ARG`, or checked-in config file. Keep it as a Railway service variable only.
 
 Optional:
 
