@@ -1,127 +1,124 @@
-# Contributing to Studio Admin
+# Contributing to InContext
 
-Thanks for showing interest in improving **Studio Admin** (repo: `next-shadcn-admin-dashboard`).  
-This guide will help you set up your environment and understand how to contribute.
+InContext is a shared project memory and execution layer for coding agents. The product combines a Next.js workspace UI, Prisma-backed project state, Auth.js authentication, MCP server entrypoints, and a guarded local git execution bridge.
 
----
+## What contributors are working on
 
-## Overview
+- Multi-project context storage for summaries, architecture notes, agent connections, and commit history
+- Cross-agent access through MCP tools and resources
+- Scoped write paths for repo-linked projects
+- Dashboard surfaces for project health, handoffs, and access control
 
-This project is built with **Next.js 16**, **TypeScript**, **Tailwind CSS v4**, and **Shadcn UI**.  
-The goal is to keep the codebase modular, scalable, and easy to extend.
+## Local setup
 
----
+1. Install dependencies.
 
-## Project Layout
-
-We use a **colocation-based file system**. Each feature keeps its own pages, components, and logic.
-
-```
-src
-├── app               # Next.js routes (App Router)
-│   ├── (auth)        # Auth layouts & screens
-│   ├── (main)        # Main dashboard routes
-│   │   └── (dashboard)
-│   │       ├── crm
-│   │       ├── finance
-│   │       ├── default
-│   │       └── ...
-│   └── layout.tsx
-├── components        # Shared UI components
-├── hooks             # Reusable hooks
-├── lib               # Config & utilities
-├── styles            # Tailwind / theme setup
-└── types             # TypeScript definitions
+```bash
+npm install
 ```
 
-If you’d like a more detailed example of this setup, check out the [Next Colocation Template](https://github.com/arhamkhnz/next-colocation-template), where the full structure is explained with examples.
+2. Create your local env file.
 
----
+```bash
+Copy-Item .env.example .env
+```
 
-## Getting Started
+3. Fill in the required envs in `.env`.
 
-### Fork and Clone the Repository
+4. Apply the Prisma migration.
 
-1. Fork the Repository
-   
-   Click [here](https://github.com/arhamkhnz/next-shadcn-admin-dashboard/fork) to fork the repository.
+```bash
+npm run db:migrate
+```
 
-2. Clone the Repository  
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/next-shadcn-admin-dashboard.git
-   ```
-   
-3. Navigate into the Project  
-   ```bash
-   cd next-shadcn-admin-dashboard
-   ```
+5. Start the app.
 
-4. **Install dependencies**
-   ```bash
-   npm install
-   ```
+```bash
+npm run dev
+```
 
-5. **Run the dev server**
-   ```bash
-   npm run dev
-   ```
-   App will be available at [http://localhost:3000](http://localhost:3000).
+6. Start the MCP server in a second terminal when you need agent integration.
 
----
+```bash
+npm run mcp:server
+```
 
-## Contribution Flow
+7. For HTTP transport testing, run the MCP HTTP server.
 
-- Always create a new branch before working on changes:
-  ```bash
-  git checkout -b feature/my-update
-  ```
+```bash
+npm run mcp:http
+```
 
-- Use clear commit messages:
-  ```bash
-  git commit -m "feat: add finance dashboard screen"
-  ```
+## Project structure
 
-- Open a Pull Request once ready.
-- If your change adds a new UI screen or component, include a screenshot in your PR description.
+```text
+src/
+  app/
+    (external)/            public entry route
+    (main)/auth/           login and register flows
+    (main)/dashboard/      project context, architecture, access, and workspace screens
+    api/                   Auth.js, project APIs, and commit execution APIs
+  components/              shared UI primitives and wrappers
+  config/                  app metadata and runtime-safe config
+  lib/                     Prisma access, project services, auth helpers, git bridge
+  mcp/                     stdio and HTTP MCP server entrypoints
+  navigation/              sidebar and shell navigation definitions
+  server/                  server actions and preference handling
+  types/                   shared type augmentation
+prisma/
+  schema.prisma            data model for users, projects, summaries, tokens, and commits
+```
 
----
+## Contribution workflow
 
-## Where to Contribute
+1. Create a branch.
 
-- **External Pages**: Landing pages or other non-dashboard routes → `src/app/(external)/`  
-- **Auth Screens**: Login, register, and authentication layouts → `src/app/(main)/auth/`  
-- **Dashboard Screens**: Feature dashboards like CRM, Finance, Analytics → `src/app/(main)/dashboard/`
-- **Components**: Reusable UI goes in `src/components/`  
-- **Hooks**: Custom logic goes in `src/hooks/`  
-- **Themes**: New presets under `src/styles/presets/`  
+```bash
+git checkout -b feat/your-change
+```
 
----
+2. Make a focused change.
 
-## Guidelines
+3. Run the build before committing.
 
-- Prefer **TypeScript types** over `any`
-- Husky pre-commit hooks are enabled - linting and formatting run automatically when you commit, and if there are errors the commit will be blocked until they are fixed. 
-- Follow **Shadcn UI** style & Tailwind v4 conventions
-- Keep accessibility in mind (ARIA, keyboard nav)
-- Use clear commit messages with conventional prefixes (`feat:`, `fix:`, `chore:`, etc.)
-- Avoid unnecessary dependencies — prefer existing utilities where possible
+```bash
+npm run build
+```
 
----
+4. Commit with a scoped message.
 
-## Submitting PRs
+```bash
+git commit -m "feat(context): add project handoff filters"
+```
 
-- Open a Pull Request once your changes are ready.  
-- Ensure your branch is up to date with `main` before submitting.  
-- Reference any related issue in your PR for context.
+5. Open a pull request with screenshots for UI changes and notes for schema or env changes.
 
----
+## Engineering guidelines
 
-## Questions & Support
+- Prefer focused commits over large mixed changes.
+- Keep project data scoped by authenticated user and membership.
+- Treat git execution and token-related code as security-sensitive.
+- Prefer TypeScript types over `any`.
+- Reuse existing UI components and shell structure instead of rebuilding the dashboard layout.
+- Keep comments short and only where the code would otherwise be unclear.
+- Validate API and MCP changes against the current Prisma models.
 
-- Report bugs, suggestions, or issues via [GitHub Issues](https://github.com/arhamkhnz/next-shadcn-admin-dashboard/issues)
+## Verification checklist
 
----
+- `npm run build` passes
+- Prisma schema and generated client stay in sync
+- New env requirements are reflected in `.env.example` and `README.md`
+- UI wording reflects InContext, not the original dashboard template
 
-Your contributions keep this project growing. 🚀
+## Notes on direct git execution
 
-**Happy Vibe Coding!**
+`DIRECT_GIT_COMMITS_ENABLED` should stay disabled by default. Any change touching the direct commit bridge should preserve:
+
+- explicit per-project opt-in
+- path validation under `GIT_PROJECTS_ROOT`
+- branch checks
+- auditable queued commit records
+
+## Support
+
+Use the repository issue tracker or PR discussion for bugs, design changes, or deployment questions.
