@@ -118,7 +118,9 @@ model Project {
   description       String?
   status            ProjectStatus          @default(DRAFT)
   repoUrl           String?
+  repoLocalPath     String?
   defaultBranch     String                 @default("main")
+  directCommitEnabled Boolean              @default(false)
   contextPath       String?
   architecturePath  String?
   createdById       String

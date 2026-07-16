@@ -26,7 +26,9 @@ const initialForm = {
   contextPath: "",
   defaultBranch: "main",
   description: "",
+  directCommitEnabled: false,
   name: "",
+  repoLocalPath: "",
   repoUrl: "",
   slug: "",
 };
@@ -37,7 +39,7 @@ export function CreateProjectDialog() {
   const [pending, setPending] = useState(false);
   const [form, setForm] = useState(initialForm);
 
-  function updateField(field: keyof typeof initialForm, value: string) {
+  function updateField(field: keyof typeof initialForm, value: string | boolean) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
@@ -94,6 +96,11 @@ export function CreateProjectDialog() {
             onChange={(event) => updateField("description", event.target.value)}
           />
           <Input placeholder="Repository URL" value={form.repoUrl} onChange={(event) => updateField("repoUrl", event.target.value)} />
+          <Input
+            placeholder="Local repo path (optional)"
+            value={form.repoLocalPath}
+            onChange={(event) => updateField("repoLocalPath", event.target.value)}
+          />
           <div className="grid gap-3 sm:grid-cols-3">
             <Input
               placeholder="Default branch"
@@ -111,6 +118,14 @@ export function CreateProjectDialog() {
               onChange={(event) => updateField("architecturePath", event.target.value)}
             />
           </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.directCommitEnabled}
+              onChange={(event) => updateField("directCommitEnabled", event.target.checked)}
+            />
+            Enable direct local git commits for this project
+          </label>
         </div>
 
         <DialogFooter showCloseButton>

@@ -9,6 +9,7 @@ import {
   getProjectDetail,
   getProjectRegistry,
 } from "@/lib/project-service";
+import { executeCommitIntent } from "@/lib/git-bridge";
 
 function textResult(value: unknown) {
   return {
@@ -154,7 +155,9 @@ server.registerTool(
       slug: z.string().optional().describe("Optional slug override"),
       description: z.string().optional().describe("Short project summary"),
       repoUrl: z.string().optional().describe("Repository URL"),
+      repoLocalPath: z.string().optional().describe("Absolute local repo path for direct git execution"),
       defaultBranch: z.string().optional().describe("Default git branch"),
+      directCommitEnabled: z.boolean().optional().describe("Whether local direct commits are enabled"),
       contextPath: z.string().optional().describe("Path where project memory lives"),
       architecturePath: z.string().optional().describe("Path where architecture docs live"),
     },
@@ -193,6 +196,19 @@ server.registerTool(
     },
   },
   async ({ slug, ...input }) => textResult({ commit: await createCommitIntent(slug, input) }),
+);
+
+server.registerTool(
+  "execute_commit_intent",
+  {
+    title: "Execute commit intent",
+    description: "Execute a queued commit intent against the configured local repository path for a project.",
+    inputSchema: {
+      slug: z.string().describe("Project slug"),
+      commitId: z.string().describe("Queued commit intent identifier"),
+    },
+  },
+  async ({ slug, commitId }) => textResult({ commit: await executeCommitIntent(slug, commitId) }),
 );
 
 async function main() {

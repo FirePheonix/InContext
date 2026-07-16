@@ -15,6 +15,7 @@ const seededUsers = [
 type SeedProject = {
   architecturePath: string;
   contextPath: string;
+  directCommitEnabled?: boolean;
   defaultBranch: string;
   description: string;
   documents: Array<{
@@ -27,6 +28,7 @@ type SeedProject = {
   }>;
   members: string[];
   name: string;
+  repoLocalPath?: string;
   repoUrl: string;
   status: "ACTIVE" | "DRAFT" | "PAUSED";
   slug: string;
@@ -74,7 +76,9 @@ const seedProjects: SeedProject[] = [
     description: "Shared memory UI for project summaries, handoffs, and architecture context.",
     status: "ACTIVE",
     repoUrl: "https://github.com/org/frontend-dashboard",
+    repoLocalPath: process.cwd(),
     defaultBranch: "main",
+    directCommitEnabled: true,
     contextPath: "memory/frontend-dashboard",
     architecturePath: "docs/architecture",
     members: ["platform@contexthub.local", "ops@contexthub.local"],
@@ -373,7 +377,9 @@ export async function ensureProjectBootstrapData() {
         description: seed.description,
         status: seed.status,
         repoUrl: seed.repoUrl,
+        repoLocalPath: seed.repoLocalPath ?? null,
         defaultBranch: seed.defaultBranch,
+        directCommitEnabled: seed.directCommitEnabled ?? false,
         contextPath: seed.contextPath,
         architecturePath: seed.architecturePath,
         createdById: owner.id,
@@ -384,7 +390,9 @@ export async function ensureProjectBootstrapData() {
         description: seed.description,
         status: seed.status,
         repoUrl: seed.repoUrl,
+        repoLocalPath: seed.repoLocalPath ?? null,
         defaultBranch: seed.defaultBranch,
+        directCommitEnabled: seed.directCommitEnabled ?? false,
         contextPath: seed.contextPath,
         architecturePath: seed.architecturePath,
         createdById: owner.id,

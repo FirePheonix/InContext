@@ -6,8 +6,10 @@ export type CreateProjectInput = {
   architecturePath?: string;
   contextPath?: string;
   defaultBranch?: string;
+  directCommitEnabled?: boolean;
   description?: string;
   name: string;
+  repoLocalPath?: string;
   repoUrl?: string;
   slug?: string;
 };
@@ -86,7 +88,9 @@ export async function createProject(input: CreateProjectInput, actorId?: string)
       slug,
       description: input.description?.trim() || null,
       repoUrl: input.repoUrl?.trim() || null,
+      repoLocalPath: input.repoLocalPath?.trim() || null,
       defaultBranch: input.defaultBranch?.trim() || "main",
+      directCommitEnabled: input.directCommitEnabled ?? false,
       contextPath: input.contextPath?.trim() || null,
       architecturePath: input.architecturePath?.trim() || null,
       status: "DRAFT",
@@ -134,7 +138,9 @@ export async function getProjectRegistry(actorId?: string) {
     description: project.description,
     status: project.status,
     repoUrl: project.repoUrl,
+    repoLocalPath: project.repoLocalPath,
     defaultBranch: project.defaultBranch,
+    directCommitEnabled: project.directCommitEnabled,
     contextPath: project.contextPath,
     architecturePath: project.architecturePath,
     updatedAt: project.updatedAt.toISOString(),
@@ -193,7 +199,9 @@ export async function getProjectDetail(slug: string, actorId?: string) {
     description: project.description,
     status: project.status,
     repoUrl: project.repoUrl,
+    repoLocalPath: project.repoLocalPath,
     defaultBranch: project.defaultBranch,
+    directCommitEnabled: project.directCommitEnabled,
     contextPath: project.contextPath,
     architecturePath: project.architecturePath,
     createdAt: project.createdAt.toISOString(),
