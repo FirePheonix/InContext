@@ -2,14 +2,14 @@ import { subDays, subHours, subMinutes } from "date-fns";
 
 import { prisma } from "@/lib/prisma";
 
-const DEFAULT_OWNER_EMAIL = "owner@contexthub.local";
-const DEFAULT_OWNER_NAME = "Context Hub Owner";
+const DEFAULT_OWNER_EMAIL = "owner@incontext.local";
+const DEFAULT_OWNER_NAME = "InContext Owner";
 
 const seededUsers = [
   { email: DEFAULT_OWNER_EMAIL, name: DEFAULT_OWNER_NAME },
-  { email: "platform@contexthub.local", name: "Platform Team" },
-  { email: "security@contexthub.local", name: "Security Team" },
-  { email: "ops@contexthub.local", name: "Operations Team" },
+  { email: "platform@incontext.local", name: "Platform Team" },
+  { email: "security@incontext.local", name: "Security Team" },
+  { email: "ops@incontext.local", name: "Operations Team" },
 ] as const;
 
 type SeedProject = {
@@ -81,7 +81,7 @@ const seedProjects: SeedProject[] = [
     directCommitEnabled: true,
     contextPath: "memory/frontend-dashboard",
     architecturePath: "docs/architecture",
-    members: ["platform@contexthub.local", "ops@contexthub.local"],
+    members: ["platform@incontext.local", "ops@incontext.local"],
     summaries: [
       {
         title: "Project created",
@@ -113,7 +113,7 @@ const seedProjects: SeedProject[] = [
       {
         title: "Runbook",
         kind: "RUNBOOK",
-        path: "docs/runbooks/context-hub.md",
+        path: "docs/runbooks/incontext.md",
         content: "Create project, attach repo, seed memory, then expose through MCP adapters.",
         checksum: "runbook-frontend-context",
         lastIndexedAt: subHours(new Date(), 2),
@@ -125,7 +125,7 @@ const seedProjects: SeedProject[] = [
         provider: "github",
         kind: "GITHUB_APP",
         scopes: "contents:write,pull_requests:write",
-        ownerEmail: "security@contexthub.local",
+        ownerEmail: "security@incontext.local",
         lastUsedAt: subHours(new Date(), 3),
       },
       {
@@ -133,7 +133,7 @@ const seedProjects: SeedProject[] = [
         provider: "internal",
         kind: "SERVICE_ACCOUNT",
         scopes: "summary:write,document:write",
-        ownerEmail: "platform@contexthub.local",
+        ownerEmail: "platform@incontext.local",
         lastUsedAt: subMinutes(new Date(), 42),
         expiresAt: subDays(new Date(), -12),
       },
@@ -143,13 +143,13 @@ const seedProjects: SeedProject[] = [
         agent: "CODEX",
         label: "Codex CLI",
         lastSyncedAt: subMinutes(new Date(), 7),
-        userEmail: "platform@contexthub.local",
+        userEmail: "platform@incontext.local",
       },
       {
         agent: "CLAUDE",
         label: "Claude Code",
         lastSyncedAt: subMinutes(new Date(), 26),
-        userEmail: "ops@contexthub.local",
+        userEmail: "ops@incontext.local",
       },
     ],
     commits: [
@@ -160,7 +160,7 @@ const seedProjects: SeedProject[] = [
         commitSha: "4ca57f1",
         filesJson: JSON.stringify(["src/app/(main)/dashboard/productivity/page.tsx", "src/lib/productivity.ts"]),
         tokenLabel: "Frontend GitHub App",
-        actorEmail: "platform@contexthub.local",
+        actorEmail: "platform@incontext.local",
         pullRequestUrl: "https://github.com/org/frontend-dashboard/pull/18",
       },
     ],
@@ -174,7 +174,7 @@ const seedProjects: SeedProject[] = [
     defaultBranch: "main",
     contextPath: "memory/reference-mcp",
     architecturePath: "architecture/reference-mcp",
-    members: ["platform@contexthub.local", "security@contexthub.local"],
+    members: ["platform@incontext.local", "security@incontext.local"],
     summaries: [
       {
         title: "Project created",
@@ -223,7 +223,7 @@ const seedProjects: SeedProject[] = [
         provider: "internal",
         kind: "SERVICE_ACCOUNT",
         scopes: "project:read,summary:write",
-        ownerEmail: "platform@contexthub.local",
+        ownerEmail: "platform@incontext.local",
         lastUsedAt: subHours(new Date(), 5),
       },
     ],
@@ -232,13 +232,13 @@ const seedProjects: SeedProject[] = [
         agent: "CODEX",
         label: "Codex CLI",
         lastSyncedAt: subMinutes(new Date(), 11),
-        userEmail: "platform@contexthub.local",
+        userEmail: "platform@incontext.local",
       },
       {
         agent: "CURSOR",
         label: "Cursor",
         lastSyncedAt: subHours(new Date(), 2),
-        userEmail: "platform@contexthub.local",
+        userEmail: "platform@incontext.local",
       },
     ],
     commits: [
@@ -248,7 +248,7 @@ const seedProjects: SeedProject[] = [
         status: "QUEUED",
         filesJson: JSON.stringify(["server/index.ts", "server/tools/projects.ts"]),
         tokenLabel: "MCP service token",
-        actorEmail: "platform@contexthub.local",
+        actorEmail: "platform@incontext.local",
       },
     ],
   },
@@ -261,7 +261,7 @@ const seedProjects: SeedProject[] = [
     defaultBranch: "develop",
     contextPath: "memory/vedaai-backend",
     architecturePath: "docs/backend",
-    members: ["security@contexthub.local", "ops@contexthub.local"],
+    members: ["security@incontext.local", "ops@incontext.local"],
     summaries: [
       {
         title: "Project created",
@@ -305,7 +305,7 @@ const seedProjects: SeedProject[] = [
         provider: "github",
         kind: "PERSONAL_ACCESS_TOKEN",
         scopes: "repo,pull_requests",
-        ownerEmail: "security@contexthub.local",
+        ownerEmail: "security@incontext.local",
         lastUsedAt: subDays(new Date(), 1),
         expiresAt: subDays(new Date(), -3),
       },
@@ -315,7 +315,7 @@ const seedProjects: SeedProject[] = [
         agent: "CLAUDE",
         label: "Claude Code",
         lastSyncedAt: subHours(new Date(), 3),
-        userEmail: "ops@contexthub.local",
+        userEmail: "ops@incontext.local",
       },
       {
         agent: "OTHER",
@@ -331,7 +331,7 @@ const seedProjects: SeedProject[] = [
         status: "FAILED",
         filesJson: JSON.stringify(["docs/backend/architecture.md"]),
         tokenLabel: "Backend PAT",
-        actorEmail: "security@contexthub.local",
+        actorEmail: "security@incontext.local",
         errorMessage: "Token scope exceeds policy boundary and requires manual approval.",
       },
     ],

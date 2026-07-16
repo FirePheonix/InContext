@@ -20,7 +20,7 @@ export default async function LoginV2() {
     <>
       <div className="mx-auto flex w-full flex-col justify-center space-y-8 sm:w-[350px]">
         <div className="space-y-2 text-center">
-          <h1 className="font-medium text-3xl">Login to Context Hub</h1>
+          <h1 className="font-medium text-3xl">Login to InContext</h1>
           <p className="text-muted-foreground text-sm">Google OAuth is wired first. Password auth lands in a later commit.</p>
         </div>
         <div className="space-y-4">

@@ -21,10 +21,10 @@ function textResult(value: unknown) {
   };
 }
 
-export function createContextHubMcpServer() {
+export function createInContextMcpServer() {
   const server = new McpServer(
     {
-      name: "context-hub",
+      name: "incontext",
       version: "0.1.0",
     },
     {
@@ -36,7 +36,7 @@ export function createContextHubMcpServer() {
 
   server.registerResource(
     "project-registry",
-    "contexthub://projects",
+    "incontext://projects",
     {
       title: "Project registry",
       description: "All known projects with counts for summaries, documents, and tokens.",
@@ -48,7 +48,7 @@ export function createContextHubMcpServer() {
       return {
         contents: [
           {
-            uri: "contexthub://projects",
+            uri: "incontext://projects",
             mimeType: "application/json",
             text: JSON.stringify({ projects }, null, 2),
           },

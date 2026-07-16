@@ -3,12 +3,12 @@ import packageJson from "../../package.json";
 const currentYear = new Date().getFullYear();
 
 export const APP_CONFIG = {
-  name: "Context Hub",
+  name: "InContext",
   version: packageJson.version,
-  copyright: `© ${currentYear}, Context Hub.`,
+  copyright: `Copyright ${currentYear} InContext.`,
   meta: {
-    title: "Context Hub - Cross-Agent Project Memory and Architecture Console",
+    title: "InContext - Cross-Agent Project Memory and Architecture Console",
     description:
-      "Context Hub is a dashboard for shared AI project memory. Track project summaries, session recall, architecture sources, and git-backed write access across Codex, Claude, Cursor, and other MCP clients.",
+      "InContext is a shared project memory and execution console. Track project summaries, session handoffs, architecture sources, and git-backed write access across Codex, Claude, Cursor, and other MCP clients.",
   },
 };

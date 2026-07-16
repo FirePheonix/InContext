@@ -29,8 +29,8 @@ export type CreateCommitIntentInput = {
   tokenLabel?: string;
 };
 
-const DEFAULT_OWNER_EMAIL = "owner@contexthub.local";
-const DEFAULT_OWNER_NAME = "Context Hub Owner";
+const DEFAULT_OWNER_EMAIL = "owner@incontext.local";
+const DEFAULT_OWNER_NAME = "InContext Owner";
 
 function toSlug(value: string) {
   return value

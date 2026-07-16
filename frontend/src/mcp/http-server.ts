@@ -3,16 +3,16 @@ import type { Request, Response } from "express";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
-import { createContextHubMcpServer } from "@/mcp/server-factory";
+import { createInContextMcpServer } from "@/mcp/server-factory";
 
 const app = createMcpExpressApp();
 
 app.get("/health", (_req: Request, res: Response) => {
-  res.status(200).json({ ok: true, service: "context-hub-mcp" });
+  res.status(200).json({ ok: true, service: "incontext-mcp" });
 });
 
 app.post("/mcp", async (req: Request, res: Response) => {
-  const server = createContextHubMcpServer();
+  const server = createInContextMcpServer();
 
   try {
     const transport = new StreamableHTTPServerTransport({
@@ -72,5 +72,5 @@ app.listen(port, (error?: Error) => {
     process.exit(1);
   }
 
-  console.log(`Context Hub MCP HTTP server listening on port ${port}`);
+  console.log(`InContext MCP HTTP server listening on port ${port}`);
 });

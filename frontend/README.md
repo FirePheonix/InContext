@@ -1,6 +1,6 @@
-# Context Hub
+# InContext
 
-Context Hub is a project-native memory and execution layer for coding agents. It gives Codex, Claude, Cursor, or any MCP-compatible client a shared project registry, portable summaries, architecture context, scoped write access, and auditable commit intents.
+InContext is a project-native memory and execution layer for coding agents. It gives Codex, Claude, Cursor, or any MCP-compatible client a shared project registry, portable summaries, architecture context, scoped write access, and auditable commit intents.
 
 ## What is implemented
 
@@ -109,7 +109,7 @@ Available MCP capabilities:
 
 It also exposes:
 
-- resource: `contexthub://projects`
+- resource: `incontext://projects`
 - prompt: `project-handoff`
 
 ## Project APIs

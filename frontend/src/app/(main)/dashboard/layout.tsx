@@ -2,14 +2,10 @@ import type { ReactNode } from "react";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-
-import { siGithub } from "simple-icons";
 
 import { AppSidebar } from "@/app/(main)/dashboard/_components/sidebar/app-sidebar";
 import { auth } from "@/auth";
-import { SimpleIcon } from "@/components/simple-icon";
-import { Button } from "@/components/ui/button";
+import { APP_CONFIG } from "@/config/app-config";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { getCurrentSessionUser } from "@/lib/session-user";
@@ -80,17 +76,12 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
             <div className="flex items-center gap-2">
               <LayoutControls />
               <ThemeSwitcher />
-              <Button asChild size="icon">
-                <Link
-                  prefetch={false}
-                  href="https://github.com/arhamkhnz/next-shadcn-admin-dashboard"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Open GitHub repository"
-                >
-                  <SimpleIcon icon={siGithub} className="fill-primary-foreground" />
-                </Link>
-              </Button>
+              <div className="hidden items-center gap-2 rounded-md border px-3 py-1.5 text-xs lg:flex">
+                <span className="font-medium">
+                  {APP_CONFIG.name} v{APP_CONFIG.version}
+                </span>
+                <span className="text-muted-foreground">Shared project memory</span>
+              </div>
               <AccountSwitcher user={currentUser} />
             </div>
           </div>
