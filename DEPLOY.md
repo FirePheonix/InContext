@@ -140,7 +140,7 @@ DIRECT_GIT_COMMITS_ENABLED="false"
 The hosted MCP service is optional. Individual-user workflows should prefer the local CLI command:
 
 ```bash
-incontext mcp serve
+npm run cli -- mcp serve
 ```
 
 That local MCP server reads hosted project context but executes git on the user's own machine.

@@ -60,7 +60,14 @@ npm run mcp:server
 npm run cli -- help
 ```
 
-7. Or run the deployable MCP HTTP server
+7. For a global developer install of the command from this repo
+
+```bash
+npm run cli:link
+incontext help
+```
+
+8. Or run the deployable MCP HTTP server
 
 ```bash
 npm run mcp:http
@@ -118,7 +125,7 @@ The preferred individual-user workflow is:
 1. Login from terminal:
 
 ```bash
-incontext login --app-url https://your-vercel-domain
+npm run cli -- login --app-url https://your-vercel-domain
 ```
 
 2. Link the current repo:
@@ -146,6 +153,8 @@ incontext mcp serve
 ```
 
 See [CLI.md](./CLI.md) for the full local workflow.
+
+The CLI source and package metadata live in [packages/cli](./packages/cli). That package is shaped for future `npx @incontext/cli ...` usage, while repo-local development uses `npm run cli -- ...` or `npm run cli:link`.
 
 ## MCP server
 

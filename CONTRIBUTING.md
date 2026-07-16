@@ -52,7 +52,13 @@ npm run mcp:server
 npm run cli -- help
 ```
 
-8. For HTTP transport testing, run the MCP HTTP server.
+8. If you want the `incontext` command globally during development, link the workspace package.
+
+```bash
+npm run cli:link
+```
+
+9. For HTTP transport testing, run the MCP HTTP server.
 
 ```bash
 npm run mcp:http
@@ -77,6 +83,8 @@ src/
   types/                   shared type augmentation
 prisma/
   schema.prisma            PostgreSQL data model for users, projects, summaries, CLI devices, resume points, tokens, and commits
+
+The publishable CLI package lives in `packages/cli/`.
 ```
 
 ## Contribution workflow

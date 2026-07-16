@@ -1,0 +1,28 @@
+{
+  "name": "@incontext/cli",
+  "version": "0.1.0",
+  "description": "Local CLI and MCP bridge for InContext",
+  "type": "module",
+  "bin": {
+    "incontext": "./bin/incontext.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": "22.x"
+  },
+  "keywords": [
+    "incontext",
+    "mcp",
+    "cli",
+    "agents"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
+  }
+}

@@ -2,6 +2,30 @@
 
 The local CLI is the primary workflow for an individual user. It stores the active project on the machine, opens browser login against the hosted app, and runs a local MCP server for Codex, Claude, Cursor, or any stdio MCP client.
 
+The CLI package now lives in [packages/cli](./packages/cli).
+
+## Install
+
+Repo-local use during development:
+
+```bash
+npm install
+npm run cli -- help
+```
+
+Install the `incontext` command globally from this repo for development:
+
+```bash
+npm run cli:link
+incontext help
+```
+
+Future publishable / agent-friendly shape:
+
+```bash
+npx @incontext/cli help
+```
+
 ## Commands
 
 ```bash
@@ -20,7 +44,7 @@ incontext mcp serve
 1. Login from the terminal.
 
 ```bash
-incontext login --app-url https://your-vercel-domain
+npm run cli -- login --app-url https://your-vercel-domain
 ```
 
 This opens:
