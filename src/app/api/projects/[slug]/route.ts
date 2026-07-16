@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import { getApiSessionUserId, unauthorizedJson } from "@/lib/api-auth";
 import { getProjectDetail } from "@/lib/project-service";
 
-export async function GET(_: Request, context: { params: Promise<{ slug: string }> }) {
-  const userId = await getApiSessionUserId();
+export async function GET(request: Request, context: { params: Promise<{ slug: string }> }) {
+  const userId = await getApiSessionUserId(request);
 
   if (!userId) {
     return unauthorizedJson();

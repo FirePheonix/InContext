@@ -7,13 +7,22 @@ import { auth } from "@/auth";
 import { APP_CONFIG } from "@/config/app-config";
 
 import { LoginForm } from "../../_components/login-form";
+import { GithubButton } from "../../_components/social-auth/github-button";
 import { GoogleButton } from "../../_components/social-auth/google-button";
 
-export default async function LoginV2() {
+type LoginV2Props = {
+  searchParams: Promise<{
+    next?: string;
+  }>;
+};
+
+export default async function LoginV2({ searchParams }: LoginV2Props) {
   const session = await auth();
+  const { next } = await searchParams;
+  const redirectTo = next?.startsWith("/") ? next : "/dashboard";
 
   if (session?.user?.id) {
-    redirect("/dashboard");
+    redirect(redirectTo);
   }
 
   return (
@@ -26,7 +35,8 @@ export default async function LoginV2() {
           </p>
         </div>
         <div className="space-y-4">
-          <GoogleButton className="w-full" />
+          <GithubButton className="w-full" redirectTo={redirectTo} />
+          <GoogleButton className="w-full" redirectTo={redirectTo} />
           <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-border after:border-t">
             <span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
           </div>

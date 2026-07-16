@@ -4,7 +4,7 @@ import { getApiSessionUserId, unauthorizedJson } from "@/lib/api-auth";
 import { createProjectSummary } from "@/lib/project-service";
 
 export async function POST(request: Request, context: { params: Promise<{ slug: string }> }) {
-  const userId = await getApiSessionUserId();
+  const userId = await getApiSessionUserId(request);
 
   if (!userId) {
     return unauthorizedJson();

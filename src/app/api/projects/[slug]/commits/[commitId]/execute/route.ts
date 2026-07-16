@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import { getApiSessionUserId, unauthorizedJson } from "@/lib/api-auth";
 import { executeCommitIntent } from "@/lib/git-bridge";
 
-export async function POST(_: Request, context: { params: Promise<{ slug: string; commitId: string }> }) {
-  const userId = await getApiSessionUserId();
+export async function POST(request: Request, context: { params: Promise<{ slug: string; commitId: string }> }) {
+  const userId = await getApiSessionUserId(request);
 
   if (!userId) {
     return unauthorizedJson();

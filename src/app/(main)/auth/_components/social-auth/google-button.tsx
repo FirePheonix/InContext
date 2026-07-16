@@ -5,13 +5,17 @@ import { SimpleIcon } from "@/components/simple-icon";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export function GoogleButton({ className, ...props }: React.ComponentProps<typeof Button>) {
+type GoogleButtonProps = React.ComponentProps<typeof Button> & {
+  redirectTo?: string;
+};
+
+export function GoogleButton({ className, redirectTo = "/dashboard", ...props }: GoogleButtonProps) {
   const googleOAuthEnabled = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
 
   async function signInWithGoogle() {
     "use server";
 
-    await signIn("google", { redirectTo: "/dashboard" });
+    await signIn("google", { redirectTo });
   }
 
   return (
