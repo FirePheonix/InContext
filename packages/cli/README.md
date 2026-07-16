@@ -21,7 +21,7 @@ incontext help
 Future published usage:
 
 ```bash
-npx @incontext/cli help
+npx incontext-cli help
 ```
 
 ## Core commands

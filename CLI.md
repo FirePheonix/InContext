@@ -23,7 +23,7 @@ incontext help
 Future publishable / agent-friendly shape:
 
 ```bash
-npx @incontext/cli help
+npx incontext-cli help
 ```
 
 ## Commands

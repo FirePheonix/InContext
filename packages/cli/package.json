@@ -1,10 +1,19 @@
 {
-  "name": "@incontext/cli",
+  "name": "incontext-cli",
   "version": "0.1.0",
   "description": "Local CLI and MCP bridge for InContext",
   "type": "module",
   "bin": {
     "incontext": "./bin/incontext.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FirePheonix/InContext.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/FirePheonix/InContext/tree/main/packages/cli",
+  "bugs": {
+    "url": "https://github.com/FirePheonix/InContext/issues"
   },
   "files": [
     "bin",
@@ -21,6 +30,9 @@
     "agents"
   ],
   "license": "MIT",
+  "publishConfig": {
+    "provenance": true
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.4.3"

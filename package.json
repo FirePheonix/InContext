@@ -25,7 +25,8 @@
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "cli": "node ./packages/cli/bin/incontext.mjs",
     "cli:mcp": "node ./packages/cli/bin/incontext.mjs mcp serve",
-    "cli:link": "npm link --workspace @incontext/cli",
+    "cli:link": "npm link --workspace incontext-cli",
+    "cli:publish": "npm publish --workspace incontext-cli",
     "mcp:server": "tsx src/mcp/server.ts",
     "mcp:http": "tsx src/mcp/http-server.ts"
   },
