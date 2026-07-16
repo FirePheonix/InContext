@@ -66,7 +66,7 @@ src/
   server/                  server actions and preference handling
   types/                   shared type augmentation
 prisma/
-  schema.prisma            data model for users, projects, summaries, tokens, and commits
+  schema.prisma            PostgreSQL data model for users, projects, summaries, tokens, and commits
 ```
 
 ## Contribution workflow

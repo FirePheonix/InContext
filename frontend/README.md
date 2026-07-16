@@ -15,7 +15,7 @@ InContext is a project-native memory and execution layer for coding agents. It g
 
 - Next.js 16
 - React 19
-- Prisma 7 + SQLite
+- Prisma 7 + PostgreSQL
 - Auth.js / NextAuth v5 beta
 - shadcn/ui
 - MCP TypeScript SDK
@@ -63,7 +63,8 @@ npm run mcp:http
 Put these in `frontend/.env`:
 
 ```dotenv
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://app_user:app_password@your-pooled-host/incontext?schema=public"
+DIRECT_URL="postgresql://app_user:app_password@your-direct-host/incontext?schema=public"
 AUTH_SECRET="replace-with-a-long-random-secret"
 AUTH_GOOGLE_ID="your-google-oauth-client-id"
 AUTH_GOOGLE_SECRET="your-google-oauth-client-secret"
@@ -72,6 +73,13 @@ DIRECT_GIT_COMMITS_ENABLED="false"
 GIT_PROJECTS_ROOT="E:\\context-git"
 MCP_PORT="8787"
 ```
+
+Use:
+
+- `DATABASE_URL` for the app runtime connection
+- `DIRECT_URL` for Prisma CLI and migrations when your provider gives you a separate direct connection
+
+If your provider only gives you one PostgreSQL URL, you can set both values to the same connection string.
 
 ## Google OAuth setup
 
@@ -149,7 +157,7 @@ Use two deployments:
 
 Good examples are Railway, Render, Fly.io, or your own VPS.
 
-The frontend and the MCP server should share the same database.
+The frontend and the MCP server should share the same PostgreSQL database.
 
 ## Vercel build
 
