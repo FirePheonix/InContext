@@ -87,6 +87,8 @@ export function Roles({ roles }: { roles: Role[] }) {
   const typeFilter = getRoleTypeFilter(groupFilter);
   const ownerFilter = (table.getColumn("owner")?.getFilterValue() as string | undefined) ?? "All";
   const statusFilter = (table.getColumn("status")?.getFilterValue() as string | undefined) ?? "All";
+  const owners = Array.from(new Set(roles.map((role) => role.owner))).sort();
+  const pendingReviewCount = roles.filter((role) => role.group === "Write tokens" && role.status === "Needs review").length;
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -123,7 +125,9 @@ export function Roles({ roles }: { roles: Role[] }) {
             <Alert className="border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-50">
               <AlertTriangle className="size-4" />
               <AlertTitle>Approval required</AlertTitle>
-              <AlertDescription>2 writable repo scopes can commit changes and still need tighter boundaries.</AlertDescription>
+              <AlertDescription>
+                {pendingReviewCount} writable repo scopes can commit changes and still need tighter boundaries.
+              </AlertDescription>
               <AlertAction>
                 <Button size="sm" variant="link">
                   Review scopes
@@ -185,9 +189,11 @@ export function Roles({ roles }: { roles: Role[] }) {
                     <SelectContent position="popper" align="start">
                       <SelectGroup>
                         <SelectItem value="All">All</SelectItem>
-                        <SelectItem value="Platform">Platform</SelectItem>
-                        <SelectItem value="Security">Security</SelectItem>
-                        <SelectItem value="Ops">Ops</SelectItem>
+                        {owners.map((owner) => (
+                          <SelectItem key={owner} value={owner}>
+                            {owner}
+                          </SelectItem>
+                        ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>

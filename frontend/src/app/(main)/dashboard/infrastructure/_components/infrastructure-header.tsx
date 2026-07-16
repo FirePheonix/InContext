@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Kbd } from "@/components/ui/kbd";
 
-export function InfrastructureHeader() {
+import type { InfrastructureSummary } from "./infrastructure-data";
+
+export function InfrastructureHeader({ summary }: { summary: InfrastructureSummary }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
@@ -21,7 +23,7 @@ export function InfrastructureHeader() {
           </div>
 
           <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
-            <span className="whitespace-nowrap text-muted-foreground text-sm">Last updated: 30s ago</span>
+            <span className="whitespace-nowrap text-muted-foreground text-sm">Last updated: {summary.lastUpdatedLabel}</span>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon-sm">
                 <RefreshCw />
@@ -34,19 +36,20 @@ export function InfrastructureHeader() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline" className="h-auto gap-1 rounded-sm px-1.5 py-0.5">
-            <Container />12 Projects
+            <Container />
+            {summary.projectCount} Projects
           </Badge>
           <Badge variant="outline" className="h-auto gap-1 rounded-sm px-1.5 py-0.5">
             <Box />
-            31 Sources
+            {summary.sourceCount} Sources
           </Badge>
           <Badge variant="outline" className="h-auto gap-1 rounded-sm px-1.5 py-0.5">
             <Server />
-            6 Writable Paths
+            {summary.writablePathCount} Writable Paths
           </Badge>
           <Badge variant="outline" className="h-auto gap-1 rounded-sm px-1.5 py-0.5">
             <span className="size-2 rounded-full bg-green-600 dark:bg-green-500" />
-            92% Fresh Context
+            {summary.freshContextPercent}% Fresh Context
           </Badge>
         </div>
       </div>
@@ -58,7 +61,7 @@ export function InfrastructureHeader() {
           </InputGroupAddon>
           <InputGroupInput placeholder="Search by project, path, or source..." />
           <InputGroupAddon align="inline-end">
-            <Kbd>⌘ K</Kbd>
+            <Kbd>Ctrl K</Kbd>
           </InputGroupAddon>
         </InputGroup>
 
