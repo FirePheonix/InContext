@@ -72,6 +72,8 @@ AUTH_TRUST_HOST="true"
 DIRECT_GIT_COMMITS_ENABLED="false"
 GIT_PROJECTS_ROOT="E:\\context-git"
 MCP_PORT="8787"
+MCP_AUTH_TOKEN=""
+MCP_ALLOWED_ORIGINS=""
 ```
 
 Use:
@@ -119,6 +121,11 @@ It also exposes:
 
 - resource: `incontext://projects`
 - prompt: `project-handoff`
+
+For public or semi-public HTTP deployment, set:
+
+- `MCP_AUTH_TOKEN` to require `Authorization: Bearer <token>`
+- `MCP_ALLOWED_ORIGINS` to a comma-separated allowlist such as `https://your-app.vercel.app,https://your-domain.com`
 
 ## Project APIs
 
