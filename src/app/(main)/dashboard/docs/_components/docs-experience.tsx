@@ -204,13 +204,13 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-24 space-y-3 border-t border-border pt-6">
+    <section id={id} className="scroll-mt-24 space-y-2 border-t border-border pt-5">
       <div className="space-y-2">
-        <Badge variant="outline" className="w-fit">
+        <Badge variant="outline" className="w-fit text-[10px]">
           {badge}
         </Badge>
-        <h2 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">{title}</h2>
-        <p className="max-w-3xl text-sm leading-6 text-muted-foreground md:text-[15px]">{description}</p>
+        <h2 className="text-base font-semibold tracking-tight text-foreground md:text-lg">{title}</h2>
+        <p className="max-w-3xl text-xs leading-5 text-muted-foreground md:text-sm">{description}</p>
       </div>
       {children}
     </section>
@@ -219,9 +219,9 @@ function Section({
 
 function CommandLines({ lines }: { lines: readonly string[] }) {
   return (
-    <div className="space-y-1.5 border-l-2 border-border pl-4">
+    <div className="space-y-1 border-l-2 border-border pl-3">
       {lines.map((line) => (
-        <div key={line} className="font-mono text-xs leading-6 text-foreground md:text-sm">
+        <div key={line} className="font-mono text-[11px] leading-5 text-foreground md:text-xs">
           {line}
         </div>
       ))}
@@ -231,9 +231,9 @@ function CommandLines({ lines }: { lines: readonly string[] }) {
 
 function NoteLines({ notes }: { notes: readonly string[] }) {
   return (
-    <ul className="space-y-1.5">
+    <ul className="space-y-1">
       {notes.map((note) => (
-        <li key={note} className="text-sm leading-6 text-muted-foreground">
+        <li key={note} className="text-xs leading-5 text-muted-foreground">
           {note}
         </li>
       ))}
@@ -243,25 +243,29 @@ function NoteLines({ notes }: { notes: readonly string[] }) {
 
 export function DocsExperience() {
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-8">
-      <header className="space-y-4">
+    <div className="mx-auto flex max-w-4xl flex-col gap-6">
+      <header className="space-y-3">
         <div className="flex items-center gap-2">
-          <BookOpen className="size-4 text-muted-foreground" />
-          <Badge variant="outline">In-app docs</Badge>
-          <Badge variant="outline">Core workflow</Badge>
+          <BookOpen className="size-3.5 text-muted-foreground" />
+          <Badge variant="outline" className="text-[10px]">
+            In-app docs
+          </Badge>
+          <Badge variant="outline" className="text-[10px]">
+            Core workflow
+          </Badge>
         </div>
-        <div className="space-y-3">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">InContext Docs</h1>
-          <p className="max-w-3xl text-sm leading-6 text-muted-foreground md:text-[15px]">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">InContext Docs</h1>
+          <p className="max-w-3xl text-xs leading-5 text-muted-foreground md:text-sm">
             This page is the working path for the product. It stays close to the rest of the dashboard, keeps the
             typography small, and explains the CLI and MCP flow one line at a time.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+        <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
           {contents.map((item) => (
             <Link key={item.id} href={`#${item.id}`} className="inline-flex items-center gap-1 hover:text-foreground">
               {item.label}
-              <ArrowRight className="size-3" />
+              <ArrowRight className="size-2.5" />
             </Link>
           ))}
         </div>
@@ -275,13 +279,13 @@ export function DocsExperience() {
         title="Start with the CLI, then link the repo"
         description="Keep the first setup short: install the CLI, connect the current checkout to one project, then open the local bridge when you need an agent session."
       >
-        <ol className="space-y-4">
+        <ol className="space-y-3">
           {startItems.map((item, index) => (
             <li key={item.title} className="space-y-1">
-              <div className="text-sm font-medium text-foreground">
+              <div className="text-xs font-medium text-foreground md:text-sm">
                 {index + 1}. {item.title}
               </div>
-              <p className="text-sm leading-6 text-muted-foreground">{item.text}</p>
+              <p className="text-xs leading-5 text-muted-foreground md:text-sm">{item.text}</p>
             </li>
           ))}
         </ol>
@@ -293,12 +297,12 @@ export function DocsExperience() {
         title="Install the CLI with npm"
         description="Choose the install shape that matches how you work. Both routes end at the same local command."
       >
-        <div className="space-y-6">
+        <div className="space-y-4">
           {installOptions.map((option) => (
-            <div key={option.title} className="space-y-3">
+            <div key={option.title} className="space-y-2.5">
               <div className="space-y-1">
-                <h3 className="text-base font-medium text-foreground">{option.title}</h3>
-                <p className="text-sm leading-6 text-muted-foreground">{option.text}</p>
+                <h3 className="text-sm font-medium text-foreground">{option.title}</h3>
+                <p className="text-xs leading-5 text-muted-foreground">{option.text}</p>
               </div>
               <CommandLines lines={option.lines} />
             </div>
@@ -312,11 +316,11 @@ export function DocsExperience() {
         title="Use the same sequence every session"
         description="The recommended path is stable: sign in, link the repo, save shared context, then start the bridge when an agent needs it."
       >
-        <div className="space-y-6">
+        <div className="space-y-4">
           {dailyFlow.map((step) => (
-            <div key={step.step} className="space-y-1.5">
-              <div className="text-sm font-medium text-foreground">{step.step}</div>
-              <p className="text-sm leading-6 text-muted-foreground">{step.text}</p>
+            <div key={step.step} className="space-y-1">
+              <div className="text-xs font-medium text-foreground md:text-sm">{step.step}</div>
+              <p className="text-xs leading-5 text-muted-foreground md:text-sm">{step.text}</p>
               <CommandLines lines={step.lines} />
             </div>
           ))}
@@ -329,24 +333,24 @@ export function DocsExperience() {
         title="Connect Codex, Claude, Cursor, Copilot, Antigravity, and any other stdio client"
         description="All clients converge on the same local bridge. Keep the command short, label the session, and enable project creation only when that session should be allowed to create a missing project."
       >
-        <div className="space-y-8">
+        <div className="space-y-6">
           {clientGuides.map((guide) => {
             const Icon = guide.icon;
 
             return (
-              <div key={guide.name} className="space-y-3 border-b border-border pb-6 last:border-b-0 last:pb-0">
+              <div key={guide.name} className="space-y-2 border-b border-border pb-5 last:border-b-0 last:pb-0">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground">
-                    <Icon className="size-3.5" />
+                  <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground">
+                    <Icon className="size-3" />
                   </div>
                   <div className="space-y-1">
-                    <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{guide.eyebrow}</div>
-                    <h3 className="text-base font-medium text-foreground">{guide.name}</h3>
-                    <p className="text-sm leading-6 text-muted-foreground">{guide.summary}</p>
+                    <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{guide.eyebrow}</div>
+                    <h3 className="text-sm font-medium text-foreground">{guide.name}</h3>
+                    <p className="text-xs leading-5 text-muted-foreground">{guide.summary}</p>
                   </div>
                 </div>
 
-                <p className="text-sm leading-6 text-muted-foreground">{guide.configHint}</p>
+                <p className="text-xs leading-5 text-muted-foreground">{guide.configHint}</p>
                 <CommandLines lines={guide.lines} />
                 <NoteLines notes={guide.notes} />
               </div>
@@ -363,7 +367,7 @@ export function DocsExperience() {
       >
         <ul className="space-y-2">
           {workspaceFacts.map((fact) => (
-            <li key={fact} className="text-sm leading-6 text-muted-foreground">
+            <li key={fact} className="text-xs leading-5 text-muted-foreground">
               {fact}
             </li>
           ))}
@@ -391,7 +395,7 @@ export function DocsExperience() {
               href={doc.href}
               target="_blank"
               rel="noreferrer"
-              className="block text-sm text-foreground underline-offset-4 hover:underline"
+              className="block text-xs text-foreground underline-offset-4 hover:underline md:text-sm"
             >
               {doc.label}
             </Link>
