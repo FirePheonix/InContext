@@ -1,6 +1,8 @@
 "use client";
 "use no memo";
 
+import Link from "next/link";
+
 import type { ColumnDef } from "@tanstack/react-table";
 import { FolderGit2, MoreHorizontal } from "lucide-react";
 
@@ -20,7 +22,12 @@ import { type ProjectRow, statusMeta } from "./data";
 function ProjectCell({ project }: { project: ProjectRow }) {
   return (
     <div className="min-w-0">
-      <div className="truncate font-medium text-foreground text-sm">{project.name}</div>
+      <Link
+        href={`/dashboard/projects/${project.slug}`}
+        className="truncate font-medium text-foreground text-sm hover:underline"
+      >
+        {project.name}
+      </Link>
       <div className="truncate text-muted-foreground text-sm">{project.slug}</div>
     </div>
   );
@@ -129,7 +136,9 @@ export const usersColumns: ColumnDef<ProjectRow>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>Open project</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/dashboard/projects/${row.original.slug}`}>Open project</Link>
+            </DropdownMenuItem>
             <DropdownMenuItem>View summaries</DropdownMenuItem>
             <DropdownMenuItem>Inspect repo access</DropdownMenuItem>
             <DropdownMenuSeparator />

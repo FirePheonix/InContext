@@ -8,6 +8,7 @@ import {
   createProjectSummary,
   getProjectDetail,
   getProjectRegistry,
+  getProjectWorkspace,
 } from "@/lib/project-service";
 
 function textResult(value: unknown) {
@@ -142,6 +143,26 @@ export function createInContextMcpServer() {
           commits: project.commits,
         },
       });
+    },
+  );
+
+  server.registerTool(
+    "get_project_workspace",
+    {
+      title: "Get project workspace",
+      description: "Fetch the shared notebook, agent nodes, and recent activity for a project.",
+      inputSchema: {
+        slug: z.string().describe("Project slug"),
+      },
+    },
+    async ({ slug }) => {
+      const workspace = await getProjectWorkspace(slug);
+
+      if (!workspace) {
+        throw new Error(`Project '${slug}' was not found.`);
+      }
+
+      return textResult(workspace);
     },
   );
 

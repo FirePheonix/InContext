@@ -12,6 +12,8 @@ InContext is a project-native memory and execution layer for coding agents. It g
 - MCP stdio server with project/context tools
 - Direct local git commit execution for queued intents, gated by env flags and per-project settings
 - Local `incontext` CLI with browser login, project linking, handoff save, resume hashes, and local MCP mode
+- Per-project shared workspace board with multiple agent nodes, one notebook, and activity logs
+- Project CRUD with unique-safe slug renaming
 
 ## Stack
 
@@ -152,6 +154,19 @@ incontext resume <hash>
 incontext mcp serve
 ```
 
+6. Open the shared workspace for a project:
+
+```text
+/dashboard/projects/<project-slug>
+```
+
+That workspace gives you:
+
+- multiple agent nodes on a React Flow canvas
+- one shared notebook per project
+- activity logs showing who updated the project context
+- edit/delete controls for the project itself
+
 See [CLI.md](./CLI.md) for the full local workflow.
 
 The CLI source and package metadata live in [packages/cli](./packages/cli). That package is shaped for future `npx incontext-cli ...` usage, while repo-local development uses `npm run cli -- ...` or `npm run cli:link`.
@@ -197,7 +212,11 @@ Available MCP capabilities:
 
 The local `incontext mcp serve` command also exposes:
 
+- `create_project`
 - `get_current_project`
+- `get_project_workspace`
+- `register_project_agent`
+- `update_shared_notebook`
 - `resume_project`
 - `add_handoff`
 - `update_progress`

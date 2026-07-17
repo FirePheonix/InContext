@@ -52,6 +52,13 @@ incontext mcp serve
 4. Start `incontext mcp serve`.
 5. Point Codex, Claude, Cursor, or another stdio MCP client at the local process.
 
+The project workspace model is:
+
+- one project
+- multiple agent nodes
+- one shared notebook
+- one activity log showing who updated the shared state
+
 ## Copyable MCP config
 
 Use this for Codex, Claude Code, or Cursor:

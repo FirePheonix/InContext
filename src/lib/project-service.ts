@@ -14,6 +14,19 @@ export type CreateProjectInput = {
   slug?: string;
 };
 
+export type UpdateProjectInput = {
+  architecturePath?: string;
+  contextPath?: string;
+  defaultBranch?: string;
+  description?: string;
+  directCommitEnabled?: boolean;
+  name?: string;
+  repoLocalPath?: string;
+  repoUrl?: string;
+  slug?: string;
+  status?: "ACTIVE" | "ARCHIVED" | "DRAFT" | "PAUSED";
+};
+
 export type CreateSummaryInput = {
   content: string;
   isPinned?: boolean;
@@ -39,6 +52,92 @@ export type RecordProjectCommitInput = {
   status: "FAILED" | "QUEUED" | "SUCCEEDED";
 };
 
+export type ActivityActor = {
+  cliDeviceId?: string;
+  cliSessionId?: string;
+  userId: string;
+};
+
+export type UpsertProjectNotebookInput = {
+  agentConnectionId?: string;
+  agentLabel?: string;
+  content: string;
+  title?: string;
+};
+
+export type CreateProjectAgentInput = {
+  agent: "CLAUDE" | "CODEX" | "CURSOR" | "OTHER";
+  label: string;
+  lastSyncedAt?: string;
+  positionX?: number;
+  positionY?: number;
+  status?: "ACTIVE" | "IDLE" | "WAITING" | "BLOCKED";
+};
+
+export type UpdateProjectAgentInput = {
+  label?: string;
+  lastSyncedAt?: string | null;
+  positionX?: number;
+  positionY?: number;
+  status?: "ACTIVE" | "IDLE" | "WAITING" | "BLOCKED";
+};
+
+export type ProjectWorkspaceData = {
+  activity: Array<{
+    action: string;
+    createdAt: string;
+    detail: Record<string, unknown>;
+    id: string;
+    targetId: string | null;
+    targetType: string | null;
+    user: {
+      email: string | null;
+      id: string;
+      name: string | null;
+    };
+  }>;
+  agents: Array<{
+    agent: "CLAUDE" | "CODEX" | "CURSOR" | "OTHER";
+    id: string;
+    label: string;
+    lastSyncedAt: string | null;
+    position: {
+      x: number | null;
+      y: number | null;
+    };
+    status: string;
+    updatedAt: string;
+    user: {
+      email: string | null;
+      id: string;
+      name: string | null;
+    } | null;
+  }>;
+  notebook: {
+    author: {
+      email: string | null;
+      id: string;
+      name: string | null;
+    } | null;
+    content: string;
+    id: string;
+    title: string;
+    updatedAt: string;
+  } | null;
+  project: {
+    defaultBranch: string;
+    description: string | null;
+    directCommitEnabled: boolean;
+    id: string;
+    name: string;
+    repoLocalPath: string | null;
+    repoUrl: string | null;
+    slug: string;
+    status: "ACTIVE" | "ARCHIVED" | "DRAFT" | "PAUSED";
+    updatedAt: string;
+  };
+};
+
 const DEFAULT_OWNER_EMAIL = "owner@incontext.local";
 const DEFAULT_OWNER_NAME = "InContext Owner";
 
@@ -48,6 +147,46 @@ function toSlug(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function parseJsonObject(value: string | null | undefined) {
+  if (!value) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    // Ignore malformed config payloads from older rows.
+  }
+
+  return {};
+}
+
+async function buildUniqueProjectSlug(projectId: string, rawSlug: string) {
+  const baseSlug = toSlug(rawSlug);
+
+  if (!baseSlug) {
+    throw new Error("Project slug could not be generated.");
+  }
+
+  const existing = await prisma.project.findFirst({
+    where: {
+      slug: baseSlug,
+      NOT: { id: projectId },
+    },
+    select: { id: true },
+  });
+
+  if (existing) {
+    throw new Error("Another project already uses that slug.");
+  }
+
+  return baseSlug;
 }
 
 async function getOrCreateOwner() {
@@ -92,7 +231,7 @@ export async function createProject(input: CreateProjectInput, actorId?: string)
     slug = `${baseSlug}-${suffix}`;
   }
 
-  return prisma.project.create({
+  const project = await prisma.project.create({
     data: {
       name,
       slug,
@@ -120,8 +259,33 @@ export async function createProject(input: CreateProjectInput, actorId?: string)
           isPinned: true,
         },
       },
+      notebook: {
+        create: {
+          authorId: fallbackOwner.id,
+          title: `${name} notebook`,
+          content: input.description?.trim() || `Shared notebook for ${name}.`,
+        },
+      },
     },
   });
+
+  if (actorId) {
+    await prisma.auditEvent.create({
+      data: {
+        userId: actorId,
+        projectId: project.id,
+        action: "project.created",
+        targetType: "project",
+        targetId: project.id,
+        detailJson: JSON.stringify({
+          name: project.name,
+          slug: project.slug,
+        }),
+      },
+    });
+  }
+
+  return project;
 }
 
 export async function getProjectRegistry(actorId?: string) {
@@ -179,6 +343,7 @@ export async function getProjectDetail(slug: string, actorId?: string) {
       documents: {
         orderBy: { updatedAt: "desc" },
       },
+      notebook: true,
       agentConnections: {
         orderBy: { updatedAt: "desc" },
       },
@@ -250,6 +415,16 @@ export async function getProjectDetail(slug: string, actorId?: string) {
       createdAt: document.createdAt.toISOString(),
       updatedAt: document.updatedAt.toISOString(),
     })),
+    notebook: project.notebook
+      ? {
+          id: project.notebook.id,
+          title: project.notebook.title,
+          content: project.notebook.content,
+          authorId: project.notebook.authorId,
+          createdAt: project.notebook.createdAt.toISOString(),
+          updatedAt: project.notebook.updatedAt.toISOString(),
+        }
+      : null,
     agents: project.agentConnections.map((connection) => ({
       id: connection.id,
       label: connection.label,
@@ -293,6 +468,375 @@ export async function getProjectDetail(slug: string, actorId?: string) {
       updatedAt: commit.updatedAt.toISOString(),
     })),
   };
+}
+
+export async function updateProject(slug: string, input: UpdateProjectInput, actorId?: string) {
+  const project = await prisma.project.findFirst({
+    where: {
+      slug,
+      ...(buildProjectAccessWhere(actorId) ?? {}),
+    },
+  });
+
+  if (!project) {
+    throw new Error("Project not found.");
+  }
+
+  const name = input.name?.trim();
+  const nextSlug = input.slug?.trim() ? await buildUniqueProjectSlug(project.id, input.slug) : project.slug;
+
+  const updated = await prisma.project.update({
+    where: { id: project.id },
+    data: {
+      name: name || project.name,
+      slug: nextSlug,
+      description: input.description === undefined ? project.description : input.description.trim() || null,
+      repoUrl: input.repoUrl === undefined ? project.repoUrl : input.repoUrl.trim() || null,
+      repoLocalPath: input.repoLocalPath === undefined ? project.repoLocalPath : input.repoLocalPath.trim() || null,
+      defaultBranch: input.defaultBranch?.trim() || project.defaultBranch,
+      directCommitEnabled: input.directCommitEnabled ?? project.directCommitEnabled,
+      contextPath: input.contextPath === undefined ? project.contextPath : input.contextPath.trim() || null,
+      architecturePath:
+        input.architecturePath === undefined ? project.architecturePath : input.architecturePath.trim() || null,
+      status: input.status ?? project.status,
+    },
+  });
+
+  if (actorId) {
+    await prisma.auditEvent.create({
+      data: {
+        userId: actorId,
+        projectId: updated.id,
+        action: "project.updated",
+        targetType: "project",
+        targetId: updated.id,
+        detailJson: JSON.stringify({
+          name: updated.name,
+          slug: updated.slug,
+          status: updated.status,
+        }),
+      },
+    });
+  }
+
+  return updated;
+}
+
+export async function deleteProject(slug: string, actorId?: string) {
+  const project = await prisma.project.findFirst({
+    where: {
+      slug,
+      ...(buildProjectAccessWhere(actorId) ?? {}),
+    },
+    select: { id: true },
+  });
+
+  if (!project) {
+    throw new Error("Project not found.");
+  }
+
+  if (actorId) {
+    await prisma.auditEvent.create({
+      data: {
+        userId: actorId,
+        action: "project.deleted",
+        targetType: "project",
+        targetId: project.id,
+        detailJson: JSON.stringify({
+          slug,
+        }),
+      },
+    });
+  }
+
+  await prisma.project.delete({
+    where: { id: project.id },
+  });
+
+  return { deleted: true };
+}
+
+export async function getProjectWorkspace(slug: string, actorId?: string): Promise<ProjectWorkspaceData | null> {
+  await ensureProjectBootstrapData();
+
+  const project = await prisma.project.findFirst({
+    where: {
+      slug,
+      ...(buildProjectAccessWhere(actorId) ?? {}),
+    },
+    include: {
+      notebook: {
+        include: {
+          author: true,
+        },
+      },
+      agentConnections: {
+        orderBy: [{ updatedAt: "desc" }],
+        include: {
+          user: true,
+        },
+      },
+      auditEvents: {
+        orderBy: { createdAt: "desc" },
+        take: 25,
+        include: {
+          user: true,
+        },
+      },
+    },
+  });
+
+  if (!project) {
+    return null;
+  }
+
+  return {
+    project: {
+      id: project.id,
+      name: project.name,
+      slug: project.slug,
+      description: project.description,
+      status: project.status,
+      repoUrl: project.repoUrl,
+      repoLocalPath: project.repoLocalPath,
+      defaultBranch: project.defaultBranch,
+      directCommitEnabled: project.directCommitEnabled,
+      updatedAt: project.updatedAt.toISOString(),
+    },
+    notebook: project.notebook
+      ? {
+          id: project.notebook.id,
+          title: project.notebook.title,
+          content: project.notebook.content,
+          updatedAt: project.notebook.updatedAt.toISOString(),
+          author: project.notebook.author
+            ? {
+                id: project.notebook.author.id,
+                name: project.notebook.author.name,
+                email: project.notebook.author.email,
+              }
+            : null,
+        }
+      : null,
+    agents: project.agentConnections.map((connection) => {
+      const metadata = parseJsonObject(connection.configJson);
+
+      return {
+        id: connection.id,
+        label: connection.label,
+        agent: connection.agent,
+        status: typeof metadata.status === "string" ? metadata.status : "IDLE",
+        position: {
+          x: typeof metadata.positionX === "number" ? metadata.positionX : null,
+          y: typeof metadata.positionY === "number" ? metadata.positionY : null,
+        },
+        lastSyncedAt: connection.lastSyncedAt?.toISOString() ?? null,
+        user: connection.user
+          ? {
+              id: connection.user.id,
+              name: connection.user.name,
+              email: connection.user.email,
+            }
+          : null,
+        updatedAt: connection.updatedAt.toISOString(),
+      };
+    }),
+    activity: project.auditEvents.map((event) => ({
+      id: event.id,
+      action: event.action,
+      targetType: event.targetType,
+      targetId: event.targetId,
+      detail: parseJsonObject(event.detailJson),
+      createdAt: event.createdAt.toISOString(),
+      user: {
+        id: event.user.id,
+        name: event.user.name,
+        email: event.user.email,
+      },
+    })),
+  };
+}
+
+export async function upsertProjectNotebook(slug: string, input: UpsertProjectNotebookInput, actor: ActivityActor) {
+  const project = await prisma.project.findFirst({
+    where: {
+      slug,
+      ...(buildProjectAccessWhere(actor.userId) ?? {}),
+    },
+    include: {
+      notebook: true,
+    },
+  });
+
+  if (!project) {
+    throw new Error("Project not found.");
+  }
+
+  const title = input.title?.trim() || project.notebook?.title || `${project.name} notebook`;
+  const content = input.content.trim();
+
+  if (!content) {
+    throw new Error("Notebook content is required.");
+  }
+
+  const notebook = project.notebook
+    ? await prisma.projectNotebook.update({
+        where: { id: project.notebook.id },
+        data: {
+          authorId: actor.userId,
+          title,
+          content,
+        },
+      })
+    : await prisma.projectNotebook.create({
+        data: {
+          projectId: project.id,
+          authorId: actor.userId,
+          title,
+          content,
+        },
+      });
+
+  await prisma.auditEvent.create({
+    data: {
+      userId: actor.userId,
+      projectId: project.id,
+      deviceId: actor.cliDeviceId,
+      cliSessionId: actor.cliSessionId,
+      action: "project.notebook.updated",
+      targetType: "project_notebook",
+      targetId: notebook.id,
+      detailJson: JSON.stringify({
+        agentConnectionId: input.agentConnectionId ?? null,
+        agentLabel: input.agentLabel ?? null,
+        title,
+      }),
+    },
+  });
+
+  return notebook;
+}
+
+export async function createProjectAgentConnection(slug: string, input: CreateProjectAgentInput, actor: ActivityActor) {
+  const project = await prisma.project.findFirst({
+    where: {
+      slug,
+      ...(buildProjectAccessWhere(actor.userId) ?? {}),
+    },
+  });
+
+  if (!project) {
+    throw new Error("Project not found.");
+  }
+
+  const label = input.label.trim();
+
+  if (!label) {
+    throw new Error("Agent label is required.");
+  }
+
+  const connection = await prisma.agentConnection.create({
+    data: {
+      projectId: project.id,
+      userId: actor.userId,
+      label,
+      agent: input.agent,
+      lastSyncedAt: input.lastSyncedAt ? new Date(input.lastSyncedAt) : new Date(),
+      configJson: JSON.stringify({
+        positionX: input.positionX ?? null,
+        positionY: input.positionY ?? null,
+        status: input.status ?? "ACTIVE",
+      }),
+    },
+  });
+
+  await prisma.auditEvent.create({
+    data: {
+      userId: actor.userId,
+      projectId: project.id,
+      deviceId: actor.cliDeviceId,
+      cliSessionId: actor.cliSessionId,
+      action: "project.agent.created",
+      targetType: "agent_connection",
+      targetId: connection.id,
+      detailJson: JSON.stringify({
+        label,
+        agent: input.agent,
+        status: input.status ?? "ACTIVE",
+      }),
+    },
+  });
+
+  return connection;
+}
+
+export async function updateProjectAgentConnection(
+  slug: string,
+  agentId: string,
+  input: UpdateProjectAgentInput,
+  actor: ActivityActor,
+) {
+  const project = await prisma.project.findFirst({
+    where: {
+      slug,
+      ...(buildProjectAccessWhere(actor.userId) ?? {}),
+    },
+    include: {
+      agentConnections: {
+        where: { id: agentId },
+      },
+    },
+  });
+
+  const connection = project?.agentConnections[0];
+
+  if (!project || !connection) {
+    throw new Error("Agent connection not found.");
+  }
+
+  const metadata = parseJsonObject(connection.configJson);
+  const nextMetadata = {
+    ...metadata,
+    positionX: input.positionX ?? metadata.positionX ?? null,
+    positionY: input.positionY ?? metadata.positionY ?? null,
+    status: input.status ?? metadata.status ?? "IDLE",
+  };
+  let nextLastSyncedAt: Date | null = new Date();
+
+  if (input.lastSyncedAt === null) {
+    nextLastSyncedAt = null;
+  } else if (input.lastSyncedAt) {
+    nextLastSyncedAt = new Date(input.lastSyncedAt);
+  }
+
+  const updated = await prisma.agentConnection.update({
+    where: { id: connection.id },
+    data: {
+      label: input.label?.trim() || connection.label,
+      lastSyncedAt: nextLastSyncedAt,
+      configJson: JSON.stringify(nextMetadata),
+    },
+  });
+
+  await prisma.auditEvent.create({
+    data: {
+      userId: actor.userId,
+      projectId: project.id,
+      deviceId: actor.cliDeviceId,
+      cliSessionId: actor.cliSessionId,
+      action: "project.agent.updated",
+      targetType: "agent_connection",
+      targetId: updated.id,
+      detailJson: JSON.stringify({
+        label: updated.label,
+        status: nextMetadata.status,
+        positionX: nextMetadata.positionX,
+        positionY: nextMetadata.positionY,
+      }),
+    },
+  });
+
+  return updated;
 }
 
 export async function createProjectSummary(slug: string, input: CreateSummaryInput, actorId?: string) {

@@ -140,14 +140,25 @@ npx incontext-cli mcp serve
 
 The local MCP server exposes:
 
+- `create_project`
 - `get_current_project`
 - `list_projects`
 - `get_project_context`
+- `get_project_workspace`
+- `register_project_agent`
+- `update_shared_notebook`
 - `resume_project`
 - `add_handoff`
 - `update_progress`
 - `record_decision`
 - `commit_and_push`
+
+Each project workspace now supports:
+
+- multiple agent nodes
+- one shared project notebook
+- activity logs for notebook edits and agent updates
+- project edit/delete operations through the web UI
 
 The local MCP process uses:
 

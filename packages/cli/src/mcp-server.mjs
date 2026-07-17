@@ -43,6 +43,36 @@ export async function startLocalMcpServer() {
   );
 
   server.registerTool(
+    "create_project",
+    {
+      title: "Create project",
+      description: "Create a new project in the signed-in InContext workspace.",
+      inputSchema: {
+        name: z.string(),
+        slug: z.string().optional(),
+        description: z.string().optional(),
+        repoUrl: z.string().optional(),
+        repoLocalPath: z.string().optional(),
+        defaultBranch: z.string().optional(),
+        contextPath: z.string().optional(),
+        architecturePath: z.string().optional(),
+      },
+    },
+    async (input) => {
+      const config = await loadConfig();
+
+      return textResult(
+        await apiRequest({
+          config,
+          path: "/api/projects",
+          method: "POST",
+          body: input,
+        }),
+      );
+    },
+  );
+
+  server.registerTool(
     "get_current_project",
     {
       title: "Get current project",
@@ -100,6 +130,32 @@ export async function startLocalMcpServer() {
   );
 
   server.registerTool(
+    "get_project_workspace",
+    {
+      title: "Get project workspace",
+      description: "Load the shared notebook, agent nodes, and recent activity for a project.",
+      inputSchema: {
+        slug: z.string().optional(),
+      },
+    },
+    async ({ slug }) => {
+      const config = await loadConfig();
+      const targetSlug = slug || config.activeProjectSlug;
+
+      if (!targetSlug) {
+        throw new Error("No project slug provided and no active project is set.");
+      }
+
+      return textResult(
+        await apiRequest({
+          config,
+          path: `/api/projects/${encodeURIComponent(targetSlug)}/workspace`,
+        }),
+      );
+    },
+  );
+
+  server.registerTool(
     "resume_project",
     {
       title: "Resume project",
@@ -136,6 +192,69 @@ export async function startLocalMcpServer() {
       }
 
       return textResult(result);
+    },
+  );
+
+  server.registerTool(
+    "register_project_agent",
+    {
+      title: "Register project agent",
+      description: "Create an agent node for the active or specified project workspace.",
+      inputSchema: {
+        projectSlug: z.string().optional(),
+        label: z.string(),
+        agent: z.enum(["CODEX", "CLAUDE", "CURSOR", "OTHER"]),
+        status: z.enum(["ACTIVE", "IDLE", "WAITING", "BLOCKED"]).optional(),
+      },
+    },
+    async ({ projectSlug, ...input }) => {
+      const config = await loadConfig();
+      const targetSlug = projectSlug || config.activeProjectSlug;
+
+      if (!targetSlug) {
+        throw new Error("No active project is set.");
+      }
+
+      return textResult(
+        await apiRequest({
+          config,
+          path: `/api/projects/${encodeURIComponent(targetSlug)}/agents`,
+          method: "POST",
+          body: input,
+        }),
+      );
+    },
+  );
+
+  server.registerTool(
+    "update_shared_notebook",
+    {
+      title: "Update shared notebook",
+      description: "Write the project's single shared notebook and log which agent updated it.",
+      inputSchema: {
+        projectSlug: z.string().optional(),
+        content: z.string(),
+        title: z.string().optional(),
+        agentConnectionId: z.string().optional(),
+        agentLabel: z.string().optional(),
+      },
+    },
+    async ({ projectSlug, ...input }) => {
+      const config = await loadConfig();
+      const targetSlug = projectSlug || config.activeProjectSlug;
+
+      if (!targetSlug) {
+        throw new Error("No active project is set.");
+      }
+
+      return textResult(
+        await apiRequest({
+          config,
+          path: `/api/projects/${encodeURIComponent(targetSlug)}/notebook`,
+          method: "PATCH",
+          body: input,
+        }),
+      );
     },
   );
 
