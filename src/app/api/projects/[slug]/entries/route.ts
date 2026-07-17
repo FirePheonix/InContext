@@ -13,6 +13,7 @@ function parseTypes(value: string | null): ProjectContextEntryType[] | undefined
     "COMMIT",
     "DOCUMENT",
     "NOTEBOOK",
+    "OBSERVATION",
     "RESUME_POINT",
     "SUMMARY",
   ]);

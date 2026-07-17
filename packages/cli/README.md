@@ -40,11 +40,17 @@ incontext login --app-url https://your-vercel-domain
 incontext whoami
 incontext status
 incontext doctor
+incontext view
 incontext projects
 incontext current
 incontext project link <project-slug>
+incontext capture --title "..." --content "..."
+incontext observations
+incontext observation promote <id>
 incontext handoff save --title "..." --content "..."
 incontext resume <hash>
+incontext export --output ./project.json
+incontext import --file ./project.json
 incontext mcp serve
 ```
 
@@ -90,6 +96,12 @@ The local MCP server now supports progressive retrieval, not just full-context l
 - `search_project_memory`
 - `timeline_project_activity`
 - `get_context_entries`
+
+It also supports draft capture into project-scoped observations:
+
+- `capture_project_observation`
+- `list_project_observations`
+- `promote_project_observation`
 
 ## Copyable MCP config
 

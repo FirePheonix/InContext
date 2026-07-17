@@ -156,7 +156,9 @@ export async function startLocalMcpServer(options = {}) {
         projectSlug: z.string().optional(),
         query: z.string(),
         limit: z.number().optional(),
-        types: z.array(z.enum(["ACTIVITY", "COMMIT", "DOCUMENT", "NOTEBOOK", "RESUME_POINT", "SUMMARY"])).optional(),
+        types: z
+          .array(z.enum(["ACTIVITY", "COMMIT", "DOCUMENT", "NOTEBOOK", "OBSERVATION", "RESUME_POINT", "SUMMARY"]))
+          .optional(),
       },
     },
     async ({ projectSlug, query, limit, types }) => {
@@ -229,7 +231,9 @@ export async function startLocalMcpServer(options = {}) {
       inputSchema: {
         projectSlug: z.string().optional(),
         limit: z.number().optional(),
-        types: z.array(z.enum(["ACTIVITY", "COMMIT", "DOCUMENT", "NOTEBOOK", "RESUME_POINT", "SUMMARY"])).optional(),
+        types: z
+          .array(z.enum(["ACTIVITY", "COMMIT", "DOCUMENT", "NOTEBOOK", "OBSERVATION", "RESUME_POINT", "SUMMARY"]))
+          .optional(),
       },
     },
     async ({ projectSlug, limit, types }) => {
@@ -254,6 +258,125 @@ export async function startLocalMcpServer(options = {}) {
         await apiRequest({
           config,
           path: `/api/projects/${encodeURIComponent(targetSlug)}/entries${searchParams.toString() ? `?${searchParams.toString()}` : ""}`,
+        }),
+      );
+    },
+  );
+
+  server.registerTool(
+    "capture_project_observation",
+    {
+      title: "Capture project observation",
+      description: "Store a draft observation for the active or specified project without editing the shared notebook yet.",
+      inputSchema: {
+        projectSlug: z.string().optional(),
+        title: z.string(),
+        content: z.string(),
+        sourceAgent: z.enum(["CODEX", "CLAUDE", "CURSOR", "OTHER"]).optional(),
+        sourceLabel: z.string().optional(),
+        sourceSession: z.string().optional(),
+        promote: z.boolean().optional(),
+      },
+    },
+    async ({ projectSlug, promote, ...input }) => {
+      const config = await loadConfig();
+      const targetSlug = projectSlug || config.activeProjectSlug;
+
+      if (!targetSlug) {
+        throw new Error("No active project is set.");
+      }
+
+      const observation = await apiRequest({
+        config,
+        path: `/api/projects/${encodeURIComponent(targetSlug)}/observations`,
+        method: "POST",
+        body: input,
+      });
+
+      if (!promote) {
+        return textResult(observation);
+      }
+
+      const promoted = await apiRequest({
+        config,
+        path: `/api/projects/${encodeURIComponent(targetSlug)}/observations/${encodeURIComponent(observation.observation.id)}`,
+        method: "PATCH",
+        body: {
+          action: "promote",
+        },
+      });
+
+      return textResult({
+        observation: observation.observation,
+        promoted: promoted.observation,
+      });
+    },
+  );
+
+  server.registerTool(
+    "list_project_observations",
+    {
+      title: "List project observations",
+      description: "List draft or promoted observations for the active or specified project.",
+      inputSchema: {
+        projectSlug: z.string().optional(),
+        limit: z.number().optional(),
+        status: z.enum(["DRAFT", "PROMOTED", "all"]).optional(),
+      },
+    },
+    async ({ projectSlug, limit, status }) => {
+      const config = await loadConfig();
+      const targetSlug = projectSlug || config.activeProjectSlug;
+
+      if (!targetSlug) {
+        throw new Error("No active project is set.");
+      }
+
+      const searchParams = new URLSearchParams();
+
+      if (typeof limit === "number") {
+        searchParams.set("limit", String(limit));
+      }
+
+      if (status) {
+        searchParams.set("status", status);
+      }
+
+      return textResult(
+        await apiRequest({
+          config,
+          path: `/api/projects/${encodeURIComponent(targetSlug)}/observations${searchParams.toString() ? `?${searchParams.toString()}` : ""}`,
+        }),
+      );
+    },
+  );
+
+  server.registerTool(
+    "promote_project_observation",
+    {
+      title: "Promote project observation",
+      description: "Promote a captured observation into the shared notebook and mark it as promoted.",
+      inputSchema: {
+        projectSlug: z.string().optional(),
+        observationId: z.string(),
+      },
+    },
+    async ({ projectSlug, observationId }) => {
+      const config = await loadConfig();
+      const targetSlug = projectSlug || config.activeProjectSlug;
+
+      if (!targetSlug) {
+        throw new Error("No active project is set.");
+      }
+
+      return textResult(
+        await apiRequest({
+          config,
+          path: `/api/projects/${encodeURIComponent(targetSlug)}/observations/${encodeURIComponent(observationId)}`,
+          method: "PATCH",
+          body: {
+            action: "promote",
+          },
         }),
       );
     },

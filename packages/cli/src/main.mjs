@@ -9,6 +9,16 @@ import { findProjectState, getConfigPath, loadConfig, saveConfig, upsertProjectS
 import { getGitBranch, getGitRemoteUrl, getGitRepoRoot } from "./git.mjs";
 import { getInstallCommandPreview, installIdeMcpTargets, uninstallIdeMcpTargets } from "./install.mjs";
 import { readContentInput } from "./io.mjs";
+import {
+  createObservation,
+  exportProjectSnapshotToFile,
+  importProjectSnapshotFromFile,
+  listObservations,
+  loadViewerData,
+  printViewerData,
+  promoteObservation,
+  resolveProjectSlug,
+} from "./project-memory.mjs";
 import { collectLocalStatus, printDoctor, printStatus, runDoctorChecks } from "./status.mjs";
 
 const execAsync = promisify(exec);
@@ -25,9 +35,15 @@ Usage:
   incontext current
   incontext status [--json]
   incontext doctor [--json]
+  incontext view [--project <slug>] [--json]
   incontext project link <project-slug>
+  incontext capture --title <title> [--content <text> | --file <path>]
+  incontext observations [--project <slug>] [--status <draft|promoted|all>] [--json]
+  incontext observation promote <id> [--project <slug>]
   incontext handoff save --title <title> [--content <text> | --file <path>]
   incontext resume <hash>
+  incontext export --output <path> [--project <slug>]
+  incontext import --file <path> [--project <slug>] [--mode <new|merge>]
   incontext mcp serve [--agent <codex|claude|cursor|other>] [--label <name>]
 
 Config path:
@@ -247,6 +263,21 @@ async function commandCurrent() {
   );
 }
 
+async function commandView(args) {
+  const config = await loadConfig();
+  const projectSlug = resolveProjectSlug(config, getStringFlag(args, "project"));
+  const limitFlag = getStringFlag(args, "limit");
+  const limit = limitFlag ? Number(limitFlag) : 8;
+  const data = await loadViewerData(config, projectSlug, Number.isFinite(limit) ? limit : 8);
+
+  if (args.flags.json) {
+    console.log(JSON.stringify(data, null, 2));
+    return;
+  }
+
+  printViewerData(data);
+}
+
 async function commandProjectLink(args) {
   const projectSlug = args.positionals[2];
 
@@ -283,6 +314,70 @@ async function commandProjectLink(args) {
   await saveConfig(nextConfig);
 
   console.log(`Linked ${repoRoot} to project ${result.link.projectName} (${result.link.projectSlug}).`);
+}
+
+async function commandCapture(args) {
+  const config = await loadConfig();
+  const projectSlug = resolveProjectSlug(config, getStringFlag(args, "project"));
+  const title = getStringFlag(args, "title");
+
+  if (!title) {
+    throw new Error("Provide an observation title with --title.");
+  }
+
+  const content = await readContentInput({
+    content: getStringFlag(args, "content"),
+    file: getStringFlag(args, "file"),
+  });
+  const sourceAgent = getStringFlag(args, "agent")?.trim().toUpperCase();
+  const result = await createObservation(config, projectSlug, {
+    title,
+    content,
+    sourceAgent: ["CODEX", "CLAUDE", "CURSOR", "OTHER"].includes(sourceAgent ?? "") ? sourceAgent : undefined,
+    sourceLabel: getStringFlag(args, "label"),
+    sourceSession: getStringFlag(args, "source-session"),
+  });
+
+  console.log(`Captured observation ${result.observation.id} for ${projectSlug}.`);
+
+  if (args.flags.promote) {
+    const promoted = await promoteObservation(config, projectSlug, result.observation.id);
+    console.log(`Promoted observation ${promoted.observation.id} into the shared notebook.`);
+  }
+}
+
+async function commandObservations(args) {
+  const config = await loadConfig();
+  const projectSlug = resolveProjectSlug(config, getStringFlag(args, "project"));
+  const rawStatus = getStringFlag(args, "status")?.trim().toUpperCase();
+  const status =
+    rawStatus === "DRAFT" || rawStatus === "PROMOTED" || rawStatus === "ALL"
+      ? rawStatus === "ALL"
+        ? "all"
+        : rawStatus
+      : undefined;
+  const limitFlag = getStringFlag(args, "limit");
+  const limit = limitFlag ? Number(limitFlag) : 25;
+  const result = await listObservations(config, projectSlug, {
+    status,
+    limit: Number.isFinite(limit) ? limit : 25,
+  });
+
+  console.log(JSON.stringify(result.observations, null, 2));
+}
+
+async function commandObservationPromote(args) {
+  const observationId = args.positionals[2];
+
+  if (!observationId) {
+    throw new Error("Usage: incontext observation promote <id> [--project <slug>]");
+  }
+
+  const config = await loadConfig();
+  const projectSlug = resolveProjectSlug(config, getStringFlag(args, "project"));
+  const result = await promoteObservation(config, projectSlug, observationId);
+
+  console.log(`Promoted observation ${result.observation.id} in ${projectSlug}.`);
 }
 
 async function commandHandoffSave(args) {
@@ -335,6 +430,39 @@ async function commandHandoffSave(args) {
 
   console.log(`Saved handoff ${result.resumePoint.hash} for ${result.resumePoint.projectName}.`);
   console.log(`Resume with: incontext resume ${result.resumePoint.hash}`);
+}
+
+async function commandExport(args) {
+  const outputPath = getStringFlag(args, "output");
+
+  if (!outputPath) {
+    throw new Error("Usage: incontext export --output <path> [--project <slug>]");
+  }
+
+  const config = await loadConfig();
+  const projectSlug = resolveProjectSlug(config, getStringFlag(args, "project"));
+  const snapshot = await exportProjectSnapshotToFile(config, projectSlug, outputPath);
+
+  console.log(`Exported ${snapshot.project.slug} to ${outputPath}.`);
+}
+
+async function commandImport(args) {
+  const filePath = getStringFlag(args, "file");
+
+  if (!filePath) {
+    throw new Error("Usage: incontext import --file <path> [--project <slug>] [--mode <new|merge>]");
+  }
+
+  const config = await loadConfig();
+  const mode = getStringFlag(args, "mode");
+  const result = await importProjectSnapshotFromFile(config, filePath, {
+    projectSlug: getStringFlag(args, "project"),
+    mode: mode === "merge" ? "merge" : "new",
+  });
+
+  console.log(
+    `Imported snapshot into ${result.project.name} (${result.project.slug}). Summaries: ${result.counts.summaries}, observations: ${result.counts.observations}.`,
+  );
 }
 
 async function commandResume(args) {
@@ -452,6 +580,11 @@ async function main() {
     return;
   }
 
+  if (command === "view") {
+    await commandView(args);
+    return;
+  }
+
   if (command === "current") {
     await commandCurrent();
     return;
@@ -462,6 +595,21 @@ async function main() {
     return;
   }
 
+  if (command === "capture") {
+    await commandCapture(args);
+    return;
+  }
+
+  if (command === "observations") {
+    await commandObservations(args);
+    return;
+  }
+
+  if (command === "observation" && subcommand === "promote") {
+    await commandObservationPromote(args);
+    return;
+  }
+
   if (command === "handoff" && subcommand === "save") {
     await commandHandoffSave(args);
     return;
@@ -469,6 +617,16 @@ async function main() {
 
   if (command === "resume") {
     await commandResume(args);
+    return;
+  }
+
+  if (command === "export") {
+    await commandExport(args);
+    return;
+  }
+
+  if (command === "import") {
+    await commandImport(args);
     return;
   }
 

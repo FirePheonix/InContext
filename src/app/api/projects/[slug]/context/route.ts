@@ -34,6 +34,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
       notebook: project.notebook,
       summaries: project.summaries,
       documents: project.documents,
+      observations: project.observations,
       agents: project.agents,
       commits: project.commits,
       tokens: project.tokens,

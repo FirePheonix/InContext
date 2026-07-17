@@ -42,11 +42,17 @@ incontext login --app-url https://your-vercel-domain
 incontext whoami
 incontext status
 incontext doctor
+incontext view
 incontext projects
 incontext current
 incontext project link <project-slug>
+incontext capture --title "..." --content "..."
+incontext observations
+incontext observation promote <id>
 incontext handoff save --title "..." --content "..."
 incontext resume <hash>
+incontext export --output ./project.json
+incontext import --file ./project.json
 incontext mcp serve
 ```
 
@@ -167,6 +173,30 @@ incontext doctor
 incontext doctor --json
 ```
 
+## Capture, view, and portability
+
+Capture draft observations without editing the notebook immediately:
+
+```bash
+incontext capture --title "Repo insight" --content "The auth callback flow is already stable, but the MCP auth path is still shared-token based."
+incontext observations --status DRAFT
+incontext observation promote <observation-id>
+```
+
+Open a read-only terminal viewer for the current project:
+
+```bash
+incontext view
+incontext view --json
+```
+
+Export or import a project snapshot:
+
+```bash
+incontext export --project your-project-slug --output ./your-project.json
+incontext import --file ./your-project.json --mode new
+```
+
 ## Local MCP tools
 
 The local MCP server exposes:
@@ -179,6 +209,9 @@ The local MCP server exposes:
 - `search_project_memory`
 - `timeline_project_activity`
 - `get_context_entries`
+- `capture_project_observation`
+- `list_project_observations`
+- `promote_project_observation`
 - `register_project_agent`
 - `update_shared_notebook`
 - `resume_project`

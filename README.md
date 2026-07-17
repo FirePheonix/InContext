@@ -149,7 +149,14 @@ incontext handoff save --title "Session handoff" --content "..."
 incontext resume <hash>
 ```
 
-5. Start the local MCP bridge for agents:
+5. Capture an observation or inspect the current project:
+
+```bash
+incontext capture --title "Session observation" --content "What changed, what is blocked, what should be promoted later."
+incontext view
+```
+
+6. Start the local MCP bridge for agents:
 
 ```bash
 incontext mcp serve
@@ -162,7 +169,14 @@ incontext status
 incontext doctor
 ```
 
-6. Open the shared workspace for a project:
+7. Export or import a snapshot when you need portability:
+
+```bash
+incontext export --project your-project-slug --output ./your-project.json
+incontext import --file ./your-project.json --mode new
+```
+
+8. Open the shared workspace for a project:
 
 ```text
 /dashboard/projects/<project-slug>
@@ -226,6 +240,9 @@ The local `incontext mcp serve` command also exposes:
 - `search_project_memory`
 - `timeline_project_activity`
 - `get_context_entries`
+- `capture_project_observation`
+- `list_project_observations`
+- `promote_project_observation`
 - `register_project_agent`
 - `update_shared_notebook`
 - `resume_project`

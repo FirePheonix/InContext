@@ -179,7 +179,7 @@ export function createInContextMcpServer() {
         query: z.string().describe("Search query"),
         limit: z.number().optional().describe("Maximum result count"),
         types: z
-          .array(z.enum(["ACTIVITY", "COMMIT", "DOCUMENT", "NOTEBOOK", "RESUME_POINT", "SUMMARY"]))
+          .array(z.enum(["ACTIVITY", "COMMIT", "DOCUMENT", "NOTEBOOK", "OBSERVATION", "RESUME_POINT", "SUMMARY"]))
           .optional()
           .describe("Optional entry types to search"),
       },
@@ -227,7 +227,7 @@ export function createInContextMcpServer() {
         slug: z.string().describe("Project slug"),
         limit: z.number().optional().describe("Maximum entry count"),
         types: z
-          .array(z.enum(["ACTIVITY", "COMMIT", "DOCUMENT", "NOTEBOOK", "RESUME_POINT", "SUMMARY"]))
+          .array(z.enum(["ACTIVITY", "COMMIT", "DOCUMENT", "NOTEBOOK", "OBSERVATION", "RESUME_POINT", "SUMMARY"]))
           .optional()
           .describe("Optional entry types to include"),
       },

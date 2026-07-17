@@ -124,6 +124,22 @@ export type ProjectWorkspaceData = {
     title: string;
     updatedAt: string;
   } | null;
+  observations: Array<{
+    author: {
+      email: string | null;
+      id: string;
+      name: string | null;
+    } | null;
+    content: string;
+    createdAt: string;
+    id: string;
+    sourceAgent: "CLAUDE" | "CODEX" | "CURSOR" | "OTHER" | null;
+    sourceLabel: string | null;
+    sourceSession: string | null;
+    status: "DRAFT" | "PROMOTED";
+    title: string;
+    updatedAt: string;
+  }>;
   project: {
     defaultBranch: string;
     description: string | null;
@@ -138,7 +154,14 @@ export type ProjectWorkspaceData = {
   };
 };
 
-export type ProjectContextEntryType = "ACTIVITY" | "COMMIT" | "DOCUMENT" | "NOTEBOOK" | "RESUME_POINT" | "SUMMARY";
+export type ProjectContextEntryType =
+  | "ACTIVITY"
+  | "COMMIT"
+  | "DOCUMENT"
+  | "NOTEBOOK"
+  | "OBSERVATION"
+  | "RESUME_POINT"
+  | "SUMMARY";
 
 export type ProjectContextEntry = {
   createdAt: string;
@@ -159,7 +182,7 @@ export type ProjectTimelineItem = {
   createdAt: string;
   detail: Record<string, unknown>;
   id: string;
-  kind: "ACTIVITY" | "COMMIT" | "DOCUMENT" | "NOTEBOOK" | "RESUME_POINT" | "SUMMARY";
+  kind: "ACTIVITY" | "COMMIT" | "DOCUMENT" | "NOTEBOOK" | "OBSERVATION" | "RESUME_POINT" | "SUMMARY";
   label: string;
   projectSlug: string;
 };
@@ -500,6 +523,12 @@ export async function getProjectDetail(slug: string, actorId?: string) {
         },
         orderBy: { updatedAt: "desc" },
       },
+      observations: {
+        include: {
+          author: true,
+        },
+        orderBy: { updatedAt: "desc" },
+      },
     },
   });
 
@@ -606,6 +635,23 @@ export async function getProjectDetail(slug: string, actorId?: string) {
       tokenLabel: commit.token?.label ?? null,
       createdAt: commit.createdAt.toISOString(),
       updatedAt: commit.updatedAt.toISOString(),
+    })),
+    observations: project.observations.map((observation) => ({
+      id: observation.id,
+      title: observation.title,
+      content: observation.content,
+      status: observation.status,
+      sourceAgent: observation.sourceAgent,
+      sourceLabel: observation.sourceLabel,
+      sourceSession: observation.sourceSession,
+      agentConnectionId: observation.agentConnectionId,
+      author: {
+        id: observation.author?.id ?? null,
+        name: observation.author?.name ?? null,
+        email: observation.author?.email ?? null,
+      },
+      createdAt: observation.createdAt.toISOString(),
+      updatedAt: observation.updatedAt.toISOString(),
     })),
   };
 }
@@ -723,6 +769,13 @@ export async function getProjectWorkspace(slug: string, actorId?: string): Promi
           user: true,
         },
       },
+      observations: {
+        orderBy: { updatedAt: "desc" },
+        take: 12,
+        include: {
+          author: true,
+        },
+      },
     },
   });
 
@@ -758,6 +811,24 @@ export async function getProjectWorkspace(slug: string, actorId?: string): Promi
             : null,
         }
       : null,
+    observations: project.observations.map((observation) => ({
+      id: observation.id,
+      title: observation.title,
+      content: observation.content,
+      status: observation.status,
+      sourceAgent: observation.sourceAgent,
+      sourceLabel: observation.sourceLabel,
+      sourceSession: observation.sourceSession,
+      createdAt: observation.createdAt.toISOString(),
+      updatedAt: observation.updatedAt.toISOString(),
+      author: observation.author
+        ? {
+            id: observation.author.id,
+            name: observation.author.name,
+            email: observation.author.email,
+          }
+        : null,
+    })),
     agents: project.agentConnections.map((connection) => {
       const metadata = parseJsonObject(connection.configJson);
 
@@ -822,6 +893,10 @@ export async function getProjectContextEntries(
         orderBy: { updatedAt: "desc" },
         take: 20,
       },
+      observations: {
+        orderBy: { updatedAt: "desc" },
+        take: 20,
+      },
       resumePoints: {
         orderBy: { updatedAt: "desc" },
         take: 20,
@@ -869,6 +944,24 @@ export async function getProjectContextEntries(
         kind: summary.kind,
         isPinned: summary.isPinned,
         sourceSession: summary.sourceSession,
+      },
+    })),
+  );
+
+  entries.push(
+    ...project.observations.map((observation) => ({
+      id: observation.id,
+      type: "OBSERVATION" as const,
+      title: observation.title,
+      excerpt: buildExcerpt(observation.content, ""),
+      createdAt: observation.createdAt.toISOString(),
+      updatedAt: observation.updatedAt.toISOString(),
+      metadata: {
+        status: observation.status,
+        sourceAgent: observation.sourceAgent,
+        sourceLabel: observation.sourceLabel,
+        sourceSession: observation.sourceSession,
+        agentConnectionId: observation.agentConnectionId,
       },
     })),
   );
@@ -1017,6 +1110,13 @@ export async function getProjectActivityTimeline(
           author: true,
         },
       },
+      observations: {
+        orderBy: { createdAt: "desc" },
+        take: 15,
+        include: {
+          author: true,
+        },
+      },
       resumePoints: {
         orderBy: { createdAt: "desc" },
         take: 15,
@@ -1105,6 +1205,29 @@ export async function getProjectActivityTimeline(
       detail: {
         kind: document.kind,
         path: document.path,
+      },
+    })),
+  );
+
+  items.push(
+    ...project.observations.map((observation) => ({
+      id: observation.id,
+      kind: "OBSERVATION" as const,
+      label: `observation ${observation.status.toLowerCase()}: ${observation.title}`,
+      createdAt: observation.createdAt.toISOString(),
+      projectSlug: project.slug,
+      actor: observation.author
+        ? {
+            id: observation.author.id,
+            name: observation.author.name,
+            email: observation.author.email,
+          }
+        : null,
+      detail: {
+        status: observation.status,
+        sourceAgent: observation.sourceAgent,
+        sourceLabel: observation.sourceLabel,
+        sourceSession: observation.sourceSession,
       },
     })),
   );

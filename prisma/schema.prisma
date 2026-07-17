@@ -56,6 +56,11 @@ enum CommitStatus {
   REVOKED
 }
 
+enum ObservationStatus {
+  DRAFT
+  PROMOTED
+}
+
 model User {
   id               String            @id @default(cuid())
   name             String?
@@ -79,6 +84,7 @@ model User {
   resumePoints     ResumePoint[]
   projectLinks     ProjectLink[]
   auditEvents      AuditEvent[]
+  observations     ProjectObservation[]
 }
 
 model Account {
@@ -143,6 +149,7 @@ model Project {
   resumePoints      ResumePoint[]
   projectLinks      ProjectLink[]
   auditEvents       AuditEvent[]
+  observations      ProjectObservation[]
 }
 
 model ProjectMember {
@@ -366,4 +373,25 @@ model AuditEvent {
 
   @@index([userId, createdAt])
   @@index([projectId, createdAt])
+}
+
+model ProjectObservation {
+  id                String            @id @default(cuid())
+  projectId         String
+  authorId          String?
+  title             String
+  content           String
+  status            ObservationStatus @default(DRAFT)
+  sourceAgent       AgentKind?
+  sourceLabel       String?
+  sourceSession     String?
+  agentConnectionId String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, status, updatedAt])
+  @@index([authorId, updatedAt])
 }
