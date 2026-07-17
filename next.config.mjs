@@ -1,4 +1,25 @@
 /** @type {import('next').NextConfig} */
+const legacyDashboardRoutes = [
+  "/dashboard/academy",
+  "/dashboard/analytics",
+  "/dashboard/analytics-v1",
+  "/dashboard/calendar",
+  "/dashboard/chat",
+  "/dashboard/coming-soon",
+  "/dashboard/crm",
+  "/dashboard/crm-v1",
+  "/dashboard/default",
+  "/dashboard/default-v1",
+  "/dashboard/ecommerce",
+  "/dashboard/finance",
+  "/dashboard/finance-v1",
+  "/dashboard/invoice",
+  "/dashboard/kanban",
+  "/dashboard/logistics",
+  "/dashboard/mail",
+  "/dashboard/tasks",
+];
+
 const nextConfig = {
   reactCompiler: true,
   compiler: {
@@ -11,6 +32,11 @@ const nextConfig = {
         destination: "/dashboard/productivity",
         permanent: false,
       },
+      ...legacyDashboardRoutes.map((source) => ({
+        source,
+        destination: "/dashboard/productivity",
+        permanent: false,
+      })),
     ];
   },
 };

@@ -1,11 +1,9 @@
 import { getProductivityDashboardData } from "@/lib/productivity";
 import { requireCurrentSessionUser } from "@/lib/session-user";
 
-import { CalendarPanel } from "./_components/calendar-panel";
 import { FocusCard } from "./_components/focus-card";
 import { ProjectsSection } from "./_components/projects-section";
 import { QuickActions } from "./_components/quick-actions";
-import { QuoteCard } from "./_components/quote-card";
 import { RecentNotesCard } from "./_components/recent-notes-card";
 import { SummaryCards } from "./_components/summary-cards";
 import { TasksSection } from "./_components/tasks-section";
@@ -20,22 +18,22 @@ export default async function Page() {
       <section className="lg:col-span-9">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl text-foreground leading-none tracking-tight">Shared context for every agent.</h1>
+            <h1 className="text-3xl text-foreground leading-none tracking-tight">
+              One control plane for agent context.
+            </h1>
             <p className="text-lg text-muted-foreground leading-none">
-              Keep project summaries, session recall, architecture notes, and write scopes portable across Codex,
-              Claude, Cursor, and repo automation.
+              Track what each project means, how to resume it, what repos are linked, and which agents can safely write
+              back.
             </p>
           </div>
           <SummaryCards items={dashboard.summaryCards} />
           <TasksSection initialItems={dashboard.tasks} />
           <ProjectsSection projects={dashboard.highlights} />
           <QuickActions />
-          <QuoteCard />
         </div>
       </section>
 
       <section className="flex flex-col gap-6 lg:col-span-3">
-        <CalendarPanel />
         <FocusCard />
         <RecentNotesCard notes={dashboard.notes} />
         <WeeklySummaryCard />

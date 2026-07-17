@@ -6,7 +6,7 @@ export function WeeklySummaryCard() {
   return (
     <Card className="shadow-xs">
       <CardHeader>
-        <CardTitle>Handoff Coverage</CardTitle>
+        <CardTitle>Resume Readiness</CardTitle>
         <CardAction>
           <Button variant="ghost" size="sm" className="text-muted-foreground">
             View all
@@ -15,10 +15,10 @@ export function WeeklySummaryCard() {
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <p className="text-muted-foreground">
-          Most active projects now have machine-readable summaries and architecture notes.
+          Resume points only work well when project summaries, architecture notes, and recent handoffs are all in sync.
         </p>
         <div className="flex flex-col gap-2">
-          <div className="font-medium">9 of 12 projects portable across agents</div>
+          <div className="font-medium">9 of 12 projects are ready to resume across agents</div>
           <Progress value={75} className="h-2" />
         </div>
       </CardContent>

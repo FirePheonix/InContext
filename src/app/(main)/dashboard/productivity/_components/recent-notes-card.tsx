@@ -8,7 +8,7 @@ export function RecentNotesCard({ notes }: { notes: RecentMemoryNote[] }) {
   return (
     <Card className="shadow-xs">
       <CardHeader>
-        <CardTitle>Recent Memory Files</CardTitle>
+        <CardTitle>Recent Context Updates</CardTitle>
         <CardAction>
           <Button variant="ghost" size="sm" className="text-muted-foreground">
             View all
