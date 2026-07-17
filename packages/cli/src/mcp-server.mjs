@@ -14,9 +14,79 @@ function textResult(value) {
   };
 }
 
+function getAgentLabel(agent) {
+  if (agent === "CLAUDE") {
+    return "Claude Code";
+  }
+
+  if (agent === "CURSOR") {
+    return "Cursor";
+  }
+
+  if (agent === "OTHER") {
+    return "External Agent";
+  }
+
+  return "Codex CLI";
+}
+
+function buildDefaultSessionLabel(agent) {
+  const timestamp = new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    month: "short",
+  }).format(new Date());
+
+  return `${getAgentLabel(agent)} - ${timestamp}`;
+}
+
+async function registerActiveProjectAgent(config, options) {
+  if (!config.activeProjectSlug) {
+    return null;
+  }
+
+  const agent = options.agent ?? "CODEX";
+  const label = options.label?.trim() || buildDefaultSessionLabel(agent);
+
+  const result = await apiRequest({
+    config,
+    path: `/api/projects/${encodeURIComponent(config.activeProjectSlug)}/agents`,
+    method: "POST",
+    body: {
+      agent,
+      label,
+      status: "ACTIVE",
+    },
+  });
+
+  return {
+    agentId: result.agent.id,
+    label,
+    projectSlug: config.activeProjectSlug,
+  };
+}
+
+async function updateRegisteredAgentStatus(config, registration, status) {
+  if (!registration) {
+    return;
+  }
+
+  await apiRequest({
+    config,
+    path: `/api/projects/${encodeURIComponent(registration.projectSlug)}/agents/${encodeURIComponent(registration.agentId)}`,
+    method: "PATCH",
+    body: {
+      status,
+    },
+  });
+}
+
 async function loadCurrentProjectContext(config) {
   if (!config.activeProjectSlug) {
-    throw new Error("No active project. Run `incontext project link <project-slug>` or `incontext resume <hash>` first.");
+    throw new Error(
+      "No active project. Run `incontext project link <project-slug>` or `incontext resume <hash>` first.",
+    );
   }
 
   return apiRequest({
@@ -25,10 +95,45 @@ async function loadCurrentProjectContext(config) {
   });
 }
 
-export async function startLocalMcpServer() {
+export async function startLocalMcpServer(options = {}) {
   const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js");
   const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
   const z = await import("zod/v4");
+  const startupConfig = await loadConfig();
+  let registration = null;
+
+  try {
+    registration = await registerActiveProjectAgent(startupConfig, options);
+  } catch (error) {
+    console.warn(
+      `Warning: failed to register the local ${getAgentLabel(options.agent ?? "CODEX")} session in InContext.`,
+    );
+    console.warn(error instanceof Error ? error.message : String(error));
+  }
+
+  let finalized = false;
+
+  async function finalizeRegistration() {
+    if (finalized) {
+      return;
+    }
+
+    finalized = true;
+
+    try {
+      await updateRegisteredAgentStatus(startupConfig, registration, "IDLE");
+    } catch {
+      // Ignore shutdown sync failures.
+    }
+  }
+
+  for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
+    process.once(signal, () => {
+      void finalizeRegistration().finally(() => {
+        process.exit(0);
+      });
+    });
+  }
 
   const server = new McpServer(
     {
@@ -279,7 +384,9 @@ export async function startLocalMcpServer() {
       }
 
       const projectState = findProjectState(config, targetSlug);
-      const branch = projectState?.branch ?? (projectState?.repoRoot ? await getGitBranch(projectState.repoRoot).catch(() => "") : "");
+      const branch =
+        projectState?.branch ??
+        (projectState?.repoRoot ? await getGitBranch(projectState.repoRoot).catch(() => "") : "");
       const result = await apiRequest({
         config,
         path: "/api/cli/resume-points",
@@ -456,5 +563,9 @@ export async function startLocalMcpServer() {
   );
 
   const transport = new StdioServerTransport();
-  await server.connect(transport);
+  try {
+    await server.connect(transport);
+  } finally {
+    await finalizeRegistration();
+  }
 }

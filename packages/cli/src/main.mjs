@@ -22,7 +22,7 @@ Usage:
   incontext project link <project-slug>
   incontext handoff save --title <title> [--content <text> | --file <path>]
   incontext resume <hash>
-  incontext mcp serve
+  incontext mcp serve [--agent <codex|claude|cursor|other>] [--label <name>]
 
 Config path:
   ${getConfigPath()}
@@ -324,10 +324,27 @@ async function commandResume(args) {
   }
 }
 
-async function commandMcpServe() {
+async function commandMcpServe(args) {
   const { startLocalMcpServer } = await import("./mcp-server.mjs");
+  const rawAgent = getStringFlag(args, "agent");
+  const label = getStringFlag(args, "label");
 
-  await startLocalMcpServer();
+  let agent = "CODEX";
+
+  if (rawAgent) {
+    const normalized = rawAgent.trim().toUpperCase();
+
+    if (!["CODEX", "CLAUDE", "CURSOR", "OTHER"].includes(normalized)) {
+      throw new Error("`--agent` must be one of: codex, claude, cursor, other.");
+    }
+
+    agent = normalized;
+  }
+
+  await startLocalMcpServer({
+    agent,
+    label,
+  });
 }
 
 async function main() {
@@ -375,7 +392,7 @@ async function main() {
   }
 
   if (command === "mcp" && subcommand === "serve") {
-    await commandMcpServe();
+    await commandMcpServe(args);
     return;
   }
 
