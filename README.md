@@ -223,6 +223,9 @@ The local `incontext mcp serve` command also exposes:
 - `create_project`
 - `get_current_project`
 - `get_project_workspace`
+- `search_project_memory`
+- `timeline_project_activity`
+- `get_context_entries`
 - `register_project_agent`
 - `update_shared_notebook`
 - `resume_project`

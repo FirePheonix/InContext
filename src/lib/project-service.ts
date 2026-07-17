@@ -138,6 +138,32 @@ export type ProjectWorkspaceData = {
   };
 };
 
+export type ProjectContextEntryType = "ACTIVITY" | "COMMIT" | "DOCUMENT" | "NOTEBOOK" | "RESUME_POINT" | "SUMMARY";
+
+export type ProjectContextEntry = {
+  createdAt: string;
+  excerpt: string;
+  id: string;
+  metadata: Record<string, unknown>;
+  title: string;
+  type: ProjectContextEntryType;
+  updatedAt: string;
+};
+
+export type ProjectTimelineItem = {
+  actor: {
+    email: string | null;
+    id: string | null;
+    name: string | null;
+  } | null;
+  createdAt: string;
+  detail: Record<string, unknown>;
+  id: string;
+  kind: "ACTIVITY" | "COMMIT" | "DOCUMENT" | "NOTEBOOK" | "RESUME_POINT" | "SUMMARY";
+  label: string;
+  projectSlug: string;
+};
+
 const DEFAULT_OWNER_EMAIL = "owner@incontext.local";
 const DEFAULT_OWNER_NAME = "InContext Owner";
 const DEFAULT_AGENT_POSITIONS = [
@@ -172,6 +198,70 @@ function parseJsonObject(value: string | null | undefined) {
   }
 
   return {};
+}
+
+function toSearchTerms(query: string) {
+  return query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+function buildExcerpt(content: string, query: string, fallbackLength = 220) {
+  const normalizedContent = content.trim().replace(/\s+/g, " ");
+
+  if (!normalizedContent) {
+    return "";
+  }
+
+  const normalizedQuery = query.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return normalizedContent.slice(0, fallbackLength);
+  }
+
+  const matchIndex = normalizedContent.toLowerCase().indexOf(normalizedQuery);
+
+  if (matchIndex === -1) {
+    return normalizedContent.slice(0, fallbackLength);
+  }
+
+  const start = Math.max(0, matchIndex - 80);
+  const end = Math.min(normalizedContent.length, matchIndex + normalizedQuery.length + 140);
+  const prefix = start > 0 ? "..." : "";
+  const suffix = end < normalizedContent.length ? "..." : "";
+
+  return `${prefix}${normalizedContent.slice(start, end)}${suffix}`;
+}
+
+function scoreSearchResult(title: string, content: string, updatedAt: Date, query: string) {
+  const haystackTitle = title.toLowerCase();
+  const haystackContent = content.toLowerCase();
+  const normalizedQuery = query.trim().toLowerCase();
+  const terms = toSearchTerms(query);
+  let score = 0;
+
+  if (normalizedQuery && haystackTitle.includes(normalizedQuery)) {
+    score += 40;
+  }
+
+  if (normalizedQuery && haystackContent.includes(normalizedQuery)) {
+    score += 22;
+  }
+
+  for (const term of terms) {
+    if (haystackTitle.startsWith(term)) {
+      score += 16;
+    } else if (haystackTitle.includes(term)) {
+      score += 10;
+    }
+
+    if (haystackContent.includes(term)) {
+      score += 5;
+    }
+  }
+
+  const ageHours = Math.max(0, (Date.now() - updatedAt.getTime()) / (1000 * 60 * 60));
+  score += Math.max(0, 12 - ageHours / 24);
+
+  return score;
 }
 
 function getDefaultAgentPosition(index: number) {
@@ -705,6 +795,380 @@ export async function getProjectWorkspace(slug: string, actorId?: string): Promi
       },
     })),
   };
+}
+
+export async function getProjectContextEntries(
+  slug: string,
+  actorId?: string,
+  options?: {
+    limit?: number;
+    types?: ProjectContextEntryType[];
+  },
+): Promise<ProjectContextEntry[] | null> {
+  await ensureProjectBootstrapData();
+
+  const project = await prisma.project.findFirst({
+    where: {
+      slug,
+      ...(buildProjectAccessWhere(actorId) ?? {}),
+    },
+    include: {
+      notebook: true,
+      summaries: {
+        orderBy: { updatedAt: "desc" },
+        take: 20,
+      },
+      documents: {
+        orderBy: { updatedAt: "desc" },
+        take: 20,
+      },
+      resumePoints: {
+        orderBy: { updatedAt: "desc" },
+        take: 20,
+      },
+      commitLogs: {
+        orderBy: { updatedAt: "desc" },
+        take: 20,
+      },
+      auditEvents: {
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      },
+    },
+  });
+
+  if (!project) {
+    return null;
+  }
+
+  const entries: ProjectContextEntry[] = [];
+
+  if (project.notebook) {
+    entries.push({
+      id: project.notebook.id,
+      type: "NOTEBOOK",
+      title: project.notebook.title,
+      excerpt: buildExcerpt(project.notebook.content, ""),
+      createdAt: project.notebook.createdAt.toISOString(),
+      updatedAt: project.notebook.updatedAt.toISOString(),
+      metadata: {
+        authorId: project.notebook.authorId,
+      },
+    });
+  }
+
+  entries.push(
+    ...project.summaries.map((summary) => ({
+      id: summary.id,
+      type: "SUMMARY" as const,
+      title: summary.title,
+      excerpt: buildExcerpt(summary.content, ""),
+      createdAt: summary.createdAt.toISOString(),
+      updatedAt: summary.updatedAt.toISOString(),
+      metadata: {
+        kind: summary.kind,
+        isPinned: summary.isPinned,
+        sourceSession: summary.sourceSession,
+      },
+    })),
+  );
+
+  entries.push(
+    ...project.documents.map((document) => ({
+      id: document.id,
+      type: "DOCUMENT" as const,
+      title: document.title,
+      excerpt: buildExcerpt(document.content, ""),
+      createdAt: document.createdAt.toISOString(),
+      updatedAt: document.updatedAt.toISOString(),
+      metadata: {
+        kind: document.kind,
+        path: document.path,
+        checksum: document.checksum,
+      },
+    })),
+  );
+
+  entries.push(
+    ...project.resumePoints.map((resumePoint) => ({
+      id: resumePoint.id,
+      type: "RESUME_POINT" as const,
+      title: resumePoint.title,
+      excerpt: buildExcerpt(resumePoint.content, ""),
+      createdAt: resumePoint.createdAt.toISOString(),
+      updatedAt: resumePoint.updatedAt.toISOString(),
+      metadata: {
+        hash: resumePoint.hash,
+        branch: resumePoint.branch,
+        sourceSession: resumePoint.sourceSession,
+      },
+    })),
+  );
+
+  entries.push(
+    ...project.commitLogs.map((commit) => ({
+      id: commit.id,
+      type: "COMMIT" as const,
+      title: commit.message,
+      excerpt: buildExcerpt(commit.errorMessage || commit.filesJson || "", ""),
+      createdAt: commit.createdAt.toISOString(),
+      updatedAt: commit.updatedAt.toISOString(),
+      metadata: {
+        branch: commit.branch,
+        status: commit.status,
+        commitSha: commit.commitSha,
+        pullRequestUrl: commit.pullRequestUrl,
+      },
+    })),
+  );
+
+  entries.push(
+    ...project.auditEvents.map((event) => ({
+      id: event.id,
+      type: "ACTIVITY" as const,
+      title: event.action,
+      excerpt: buildExcerpt(JSON.stringify(parseJsonObject(event.detailJson)), ""),
+      createdAt: event.createdAt.toISOString(),
+      updatedAt: event.createdAt.toISOString(),
+      metadata: {
+        targetType: event.targetType,
+        targetId: event.targetId,
+        detail: parseJsonObject(event.detailJson),
+      },
+    })),
+  );
+
+  const filtered = options?.types?.length ? entries.filter((entry) => options.types?.includes(entry.type)) : entries;
+
+  return filtered
+    .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
+    .slice(0, Math.max(1, Math.min(options?.limit ?? 24, 100)));
+}
+
+export async function searchProjectMemory(
+  slug: string,
+  query: string,
+  actorId?: string,
+  options?: {
+    limit?: number;
+    types?: ProjectContextEntryType[];
+  },
+) {
+  const entries = await getProjectContextEntries(slug, actorId, {
+    limit: 100,
+    types: options?.types,
+  });
+
+  if (!entries) {
+    return null;
+  }
+
+  const normalizedQuery = query.trim();
+
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  const ranked = entries
+    .map((entry) => ({
+      ...entry,
+      score: scoreSearchResult(
+        entry.title,
+        `${entry.title}\n${entry.excerpt}`,
+        new Date(entry.updatedAt),
+        normalizedQuery,
+      ),
+      excerpt: buildExcerpt(`${entry.title}\n${entry.excerpt}`, normalizedQuery),
+    }))
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => right.score - left.score || right.updatedAt.localeCompare(left.updatedAt))
+    .slice(0, Math.max(1, Math.min(options?.limit ?? 12, 50)));
+
+  return ranked;
+}
+
+export async function getProjectActivityTimeline(
+  slug: string,
+  actorId?: string,
+  options?: {
+    limit?: number;
+  },
+): Promise<ProjectTimelineItem[] | null> {
+  await ensureProjectBootstrapData();
+
+  const project = await prisma.project.findFirst({
+    where: {
+      slug,
+      ...(buildProjectAccessWhere(actorId) ?? {}),
+    },
+    include: {
+      notebook: true,
+      summaries: {
+        orderBy: { createdAt: "desc" },
+        take: 15,
+        include: {
+          author: true,
+        },
+      },
+      documents: {
+        orderBy: { updatedAt: "desc" },
+        take: 15,
+        include: {
+          author: true,
+        },
+      },
+      resumePoints: {
+        orderBy: { createdAt: "desc" },
+        take: 15,
+        include: {
+          author: true,
+        },
+      },
+      commitLogs: {
+        orderBy: { createdAt: "desc" },
+        take: 15,
+        include: {
+          actor: true,
+        },
+      },
+      auditEvents: {
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        include: {
+          user: true,
+        },
+      },
+    },
+  });
+
+  if (!project) {
+    return null;
+  }
+
+  const items: ProjectTimelineItem[] = [];
+
+  if (project.notebook) {
+    items.push({
+      id: project.notebook.id,
+      kind: "NOTEBOOK",
+      label: `Notebook updated: ${project.notebook.title}`,
+      createdAt: project.notebook.updatedAt.toISOString(),
+      projectSlug: project.slug,
+      actor: project.notebook.authorId
+        ? {
+            id: project.notebook.authorId,
+            name: null,
+            email: null,
+          }
+        : null,
+      detail: {
+        title: project.notebook.title,
+      },
+    });
+  }
+
+  items.push(
+    ...project.summaries.map((summary) => ({
+      id: summary.id,
+      kind: "SUMMARY" as const,
+      label: `${summary.kind.toLowerCase()}: ${summary.title}`,
+      createdAt: summary.createdAt.toISOString(),
+      projectSlug: project.slug,
+      actor: summary.author
+        ? {
+            id: summary.author.id,
+            name: summary.author.name,
+            email: summary.author.email,
+          }
+        : null,
+      detail: {
+        kind: summary.kind,
+        isPinned: summary.isPinned,
+      },
+    })),
+  );
+
+  items.push(
+    ...project.documents.map((document) => ({
+      id: document.id,
+      kind: "DOCUMENT" as const,
+      label: `document: ${document.title}`,
+      createdAt: document.updatedAt.toISOString(),
+      projectSlug: project.slug,
+      actor: document.author
+        ? {
+            id: document.author.id,
+            name: document.author.name,
+            email: document.author.email,
+          }
+        : null,
+      detail: {
+        kind: document.kind,
+        path: document.path,
+      },
+    })),
+  );
+
+  items.push(
+    ...project.resumePoints.map((resumePoint) => ({
+      id: resumePoint.id,
+      kind: "RESUME_POINT" as const,
+      label: `resume: ${resumePoint.title}`,
+      createdAt: resumePoint.createdAt.toISOString(),
+      projectSlug: project.slug,
+      actor: {
+        id: resumePoint.author.id,
+        name: resumePoint.author.name,
+        email: resumePoint.author.email,
+      },
+      detail: {
+        hash: resumePoint.hash,
+        branch: resumePoint.branch,
+      },
+    })),
+  );
+
+  items.push(
+    ...project.commitLogs.map((commit) => ({
+      id: commit.id,
+      kind: "COMMIT" as const,
+      label: `commit ${commit.status.toLowerCase()}: ${commit.message}`,
+      createdAt: commit.createdAt.toISOString(),
+      projectSlug: project.slug,
+      actor: commit.actor
+        ? {
+            id: commit.actor.id,
+            name: commit.actor.name,
+            email: commit.actor.email,
+          }
+        : null,
+      detail: {
+        branch: commit.branch,
+        status: commit.status,
+        commitSha: commit.commitSha,
+      },
+    })),
+  );
+
+  items.push(
+    ...project.auditEvents.map((event) => ({
+      id: event.id,
+      kind: "ACTIVITY" as const,
+      label: event.action,
+      createdAt: event.createdAt.toISOString(),
+      projectSlug: project.slug,
+      actor: {
+        id: event.user.id,
+        name: event.user.name,
+        email: event.user.email,
+      },
+      detail: parseJsonObject(event.detailJson),
+    })),
+  );
+
+  return items
+    .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+    .slice(0, Math.max(1, Math.min(options?.limit ?? 30, 100)));
 }
 
 export async function upsertProjectNotebook(slug: string, input: UpsertProjectNotebookInput, actor: ActivityActor) {

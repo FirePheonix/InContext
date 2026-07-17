@@ -6,9 +6,12 @@ import {
   createCommitIntent,
   createProject,
   createProjectSummary,
+  getProjectActivityTimeline,
+  getProjectContextEntries,
   getProjectDetail,
   getProjectRegistry,
   getProjectWorkspace,
+  searchProjectMemory,
 } from "@/lib/project-service";
 
 function textResult(value: unknown) {
@@ -163,6 +166,80 @@ export function createInContextMcpServer() {
       }
 
       return textResult(workspace);
+    },
+  );
+
+  server.registerTool(
+    "search_project_memory",
+    {
+      title: "Search project memory",
+      description: "Search notebook, summaries, documents, resume points, commits, and activity for a project.",
+      inputSchema: {
+        slug: z.string().describe("Project slug"),
+        query: z.string().describe("Search query"),
+        limit: z.number().optional().describe("Maximum result count"),
+        types: z
+          .array(z.enum(["ACTIVITY", "COMMIT", "DOCUMENT", "NOTEBOOK", "RESUME_POINT", "SUMMARY"]))
+          .optional()
+          .describe("Optional entry types to search"),
+      },
+    },
+    async ({ slug, query, limit, types }) => {
+      const results = await searchProjectMemory(slug, query, undefined, { limit, types });
+
+      if (!results) {
+        throw new Error(`Project '${slug}' was not found.`);
+      }
+
+      return textResult({ slug, query, results });
+    },
+  );
+
+  server.registerTool(
+    "timeline_project_activity",
+    {
+      title: "Timeline project activity",
+      description:
+        "Return recent project activity in chronological order across notebook, summaries, resumes, commits, and audit events.",
+      inputSchema: {
+        slug: z.string().describe("Project slug"),
+        limit: z.number().optional().describe("Maximum item count"),
+      },
+    },
+    async ({ slug, limit }) => {
+      const items = await getProjectActivityTimeline(slug, undefined, { limit });
+
+      if (!items) {
+        throw new Error(`Project '${slug}' was not found.`);
+      }
+
+      return textResult({ slug, items });
+    },
+  );
+
+  server.registerTool(
+    "get_context_entries",
+    {
+      title: "Get context entries",
+      description:
+        "Fetch a recent unified feed of notebook, summaries, documents, resumes, commits, and activity for a project.",
+      inputSchema: {
+        slug: z.string().describe("Project slug"),
+        limit: z.number().optional().describe("Maximum entry count"),
+        types: z
+          .array(z.enum(["ACTIVITY", "COMMIT", "DOCUMENT", "NOTEBOOK", "RESUME_POINT", "SUMMARY"]))
+          .optional()
+          .describe("Optional entry types to include"),
+      },
+    },
+    async ({ slug, limit, types }) => {
+      const entries = await getProjectContextEntries(slug, undefined, { limit, types });
+
+      if (!entries) {
+        throw new Error(`Project '${slug}' was not found.`);
+      }
+
+      return textResult({ slug, entries });
     },
   );
 

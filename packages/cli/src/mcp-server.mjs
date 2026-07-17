@@ -148,6 +148,118 @@ export async function startLocalMcpServer(options = {}) {
   );
 
   server.registerTool(
+    "search_project_memory",
+    {
+      title: "Search project memory",
+      description: "Search notebook, summaries, documents, resume points, commits, and audit activity for a project.",
+      inputSchema: {
+        projectSlug: z.string().optional(),
+        query: z.string(),
+        limit: z.number().optional(),
+        types: z.array(z.enum(["ACTIVITY", "COMMIT", "DOCUMENT", "NOTEBOOK", "RESUME_POINT", "SUMMARY"])).optional(),
+      },
+    },
+    async ({ projectSlug, query, limit, types }) => {
+      const config = await loadConfig();
+      const targetSlug = projectSlug || config.activeProjectSlug;
+
+      if (!targetSlug) {
+        throw new Error("No active project is set.");
+      }
+
+      const searchParams = new URLSearchParams({
+        q: query,
+      });
+
+      if (typeof limit === "number") {
+        searchParams.set("limit", String(limit));
+      }
+
+      if (types?.length) {
+        searchParams.set("types", types.join(","));
+      }
+
+      return textResult(
+        await apiRequest({
+          config,
+          path: `/api/projects/${encodeURIComponent(targetSlug)}/search?${searchParams.toString()}`,
+        }),
+      );
+    },
+  );
+
+  server.registerTool(
+    "timeline_project_activity",
+    {
+      title: "Timeline project activity",
+      description: "Read a recent timeline across notebook updates, summaries, resume points, commits, and audit events.",
+      inputSchema: {
+        projectSlug: z.string().optional(),
+        limit: z.number().optional(),
+      },
+    },
+    async ({ projectSlug, limit }) => {
+      const config = await loadConfig();
+      const targetSlug = projectSlug || config.activeProjectSlug;
+
+      if (!targetSlug) {
+        throw new Error("No active project is set.");
+      }
+
+      const searchParams = new URLSearchParams();
+
+      if (typeof limit === "number") {
+        searchParams.set("limit", String(limit));
+      }
+
+      return textResult(
+        await apiRequest({
+          config,
+          path: `/api/projects/${encodeURIComponent(targetSlug)}/timeline${searchParams.toString() ? `?${searchParams.toString()}` : ""}`,
+        }),
+      );
+    },
+  );
+
+  server.registerTool(
+    "get_context_entries",
+    {
+      title: "Get context entries",
+      description: "Read a recent unified feed of notebook, summaries, documents, resume points, commits, and activity.",
+      inputSchema: {
+        projectSlug: z.string().optional(),
+        limit: z.number().optional(),
+        types: z.array(z.enum(["ACTIVITY", "COMMIT", "DOCUMENT", "NOTEBOOK", "RESUME_POINT", "SUMMARY"])).optional(),
+      },
+    },
+    async ({ projectSlug, limit, types }) => {
+      const config = await loadConfig();
+      const targetSlug = projectSlug || config.activeProjectSlug;
+
+      if (!targetSlug) {
+        throw new Error("No active project is set.");
+      }
+
+      const searchParams = new URLSearchParams();
+
+      if (typeof limit === "number") {
+        searchParams.set("limit", String(limit));
+      }
+
+      if (types?.length) {
+        searchParams.set("types", types.join(","));
+      }
+
+      return textResult(
+        await apiRequest({
+          config,
+          path: `/api/projects/${encodeURIComponent(targetSlug)}/entries${searchParams.toString() ? `?${searchParams.toString()}` : ""}`,
+        }),
+      );
+    },
+  );
+
+  server.registerTool(
     "create_project",
     {
       title: "Create project",

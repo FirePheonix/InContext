@@ -85,6 +85,12 @@ The project workspace model is:
 - one shared notebook
 - one activity log showing who updated the shared state
 
+The local MCP server now supports progressive retrieval, not just full-context loads:
+
+- `search_project_memory`
+- `timeline_project_activity`
+- `get_context_entries`
+
 ## Copyable MCP config
 
 Use this for Codex, Claude Code, or Cursor:

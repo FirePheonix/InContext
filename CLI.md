@@ -176,6 +176,9 @@ The local MCP server exposes:
 - `list_projects`
 - `get_project_context`
 - `get_project_workspace`
+- `search_project_memory`
+- `timeline_project_activity`
+- `get_context_entries`
 - `register_project_agent`
 - `update_shared_notebook`
 - `resume_project`
