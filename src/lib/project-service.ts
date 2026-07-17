@@ -140,6 +140,13 @@ export type ProjectWorkspaceData = {
 
 const DEFAULT_OWNER_EMAIL = "owner@incontext.local";
 const DEFAULT_OWNER_NAME = "InContext Owner";
+const DEFAULT_AGENT_POSITIONS = [
+  { x: 80, y: 90 },
+  { x: 110, y: 360 },
+  { x: 860, y: 120 },
+  { x: 820, y: 380 },
+  { x: 470, y: 560 },
+];
 
 function toSlug(value: string) {
   return value
@@ -165,6 +172,49 @@ function parseJsonObject(value: string | null | undefined) {
   }
 
   return {};
+}
+
+function getDefaultAgentPosition(index: number) {
+  return DEFAULT_AGENT_POSITIONS[index] ?? { x: 120 + index * 26, y: 110 + index * 56 };
+}
+
+function resolveNextAgentPosition(
+  agentConnections: Array<{
+    configJson: string | null;
+  }>,
+  input: Pick<CreateProjectAgentInput, "positionX" | "positionY">,
+) {
+  if (typeof input.positionX === "number" && typeof input.positionY === "number") {
+    return {
+      x: input.positionX,
+      y: input.positionY,
+    };
+  }
+
+  const occupied = new Set(
+    agentConnections.flatMap((connection, index) => {
+      const metadata = parseJsonObject(connection.configJson);
+      const fallback = getDefaultAgentPosition(index);
+      const x = typeof metadata.positionX === "number" ? metadata.positionX : fallback.x;
+      const y = typeof metadata.positionY === "number" ? metadata.positionY : fallback.y;
+
+      return [`${x}:${y}`];
+    }),
+  );
+
+  let candidateIndex = 0;
+
+  while (candidateIndex < agentConnections.length + 12) {
+    const candidate = getDefaultAgentPosition(candidateIndex);
+
+    if (!occupied.has(`${candidate.x}:${candidate.y}`)) {
+      return candidate;
+    }
+
+    candidateIndex += 1;
+  }
+
+  return getDefaultAgentPosition(agentConnections.length);
 }
 
 async function buildUniqueProjectSlug(projectId: string, rawSlug: string) {
@@ -723,6 +773,11 @@ export async function createProjectAgentConnection(slug: string, input: CreatePr
       slug,
       ...(buildProjectAccessWhere(actor.userId) ?? {}),
     },
+    include: {
+      agentConnections: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
   });
 
   if (!project) {
@@ -735,6 +790,8 @@ export async function createProjectAgentConnection(slug: string, input: CreatePr
     throw new Error("Agent label is required.");
   }
 
+  const position = resolveNextAgentPosition(project.agentConnections, input);
+
   const connection = await prisma.agentConnection.create({
     data: {
       projectId: project.id,
@@ -743,9 +800,11 @@ export async function createProjectAgentConnection(slug: string, input: CreatePr
       agent: input.agent,
       lastSyncedAt: input.lastSyncedAt ? new Date(input.lastSyncedAt) : new Date(),
       configJson: JSON.stringify({
-        positionX: input.positionX ?? null,
-        positionY: input.positionY ?? null,
+        positionX: position.x,
+        positionY: position.y,
         status: input.status ?? "ACTIVE",
+        cliSessionId: actor.cliSessionId ?? null,
+        cliDeviceId: actor.cliDeviceId ?? null,
       }),
     },
   });
