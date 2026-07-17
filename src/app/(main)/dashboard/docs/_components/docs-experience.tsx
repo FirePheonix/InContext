@@ -9,7 +9,7 @@ import {
   Compass,
   FileCode2,
   FolderGit2,
-  Github,
+  GitFork,
   Keyboard,
   PlayCircle,
   Search,
@@ -148,7 +148,7 @@ const clientGuides = [
     eyebrow: "Copilot CLI and app",
     summary:
       "Copilot can add local stdio MCP servers from the CLI. Use a custom label and map the board type to `OTHER` for now.",
-    icon: Github,
+    icon: GitFork,
     configHint: "Add the server with the Copilot CLI.",
     code: ['copilot mcp add incontext -- npx incontext-cli mcp serve --agent OTHER --label "GitHub Copilot"'],
     notes: [
