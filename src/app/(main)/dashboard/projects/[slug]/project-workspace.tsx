@@ -2,7 +2,7 @@
 
 import "@xyflow/react/dist/style.css";
 
-import { startTransition, useState } from "react";
+import { startTransition, useEffect, useEffectEvent, useMemo, useState } from "react";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,16 +12,17 @@ import {
   Controls,
   type Edge,
   Handle,
-  MarkerType,
   MiniMap,
   type Node,
   type NodeProps,
   Position,
   ReactFlow,
   ReactFlowProvider,
+  useEdgesState,
+  useNodesState,
 } from "@xyflow/react";
 import { formatDistanceToNow } from "date-fns";
-import { FilePenLine, GitBranch, History, Pencil, Plus, Save, Trash2, Workflow } from "lucide-react";
+import { ChevronLeft, FilePenLine, History, Pencil, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -65,8 +66,9 @@ type AgentNodeData = {
 
 function NotebookNode({ data }: NodeProps<Node<NotebookNodeData>>) {
   return (
-    <div className="w-[360px] rounded-[28px] border border-border/70 bg-card p-4 shadow-2xl shadow-black/20">
-      <Handle type="target" position={Position.Left} className="!h-3 !w-3 !border-2 !border-background !bg-sky-500" />
+    <div className="w-[350px] rounded-[30px] border border-border/70 bg-card/95 p-4 shadow-2xl shadow-black/20 backdrop-blur-sm">
+      <Handle type="target" position={Position.Left} className="!size-3 !border-2 !border-background !bg-sky-500" />
+      <Handle type="target" position={Position.Right} className="!size-3 !border-2 !border-background !bg-sky-500" />
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -74,7 +76,7 @@ function NotebookNode({ data }: NodeProps<Node<NotebookNodeData>>) {
             <div className="text-muted-foreground text-xs">
               {data.updatedAt
                 ? `Updated ${formatDistanceToNow(new Date(data.updatedAt), { addSuffix: true })}`
-                : "New notebook"}
+                : "Shared notebook"}
             </div>
           </div>
           <Button size="sm" className="nodrag shrink-0" onClick={data.onSave} disabled={data.saving}>
@@ -86,20 +88,15 @@ function NotebookNode({ data }: NodeProps<Node<NotebookNodeData>>) {
           value={data.content}
           onChange={(event) => data.onChange(event.target.value)}
           className="nodrag nowheel min-h-[260px] resize-none border-border/70 bg-background/60 text-sm leading-6"
-          placeholder="This is the single shared project notebook. Agents read and update this context."
+          placeholder="This is the single shared notebook for the project. Every agent reads and updates this same context."
         />
       </div>
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!h-3 !w-3 !border-2 !border-background !bg-orange-500"
-      />
     </div>
   );
 }
 
 function AgentNode({ data }: NodeProps<Node<AgentNodeData>>) {
-  let statusTone = "border-border bg-muted/40 text-muted-foreground";
+  let statusTone = "border-border/70 bg-muted/50 text-muted-foreground";
 
   if (data.status === "ACTIVE") {
     statusTone = "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
@@ -110,8 +107,9 @@ function AgentNode({ data }: NodeProps<Node<AgentNodeData>>) {
   }
 
   return (
-    <div className="w-[188px] rounded-[24px] border border-border/60 bg-card p-3 shadow-black/10 shadow-xl">
-      <Handle type="source" position={Position.Right} className="!h-3 !w-3 !border-2 !border-background !bg-blue-500" />
+    <div className="w-[186px] rounded-[26px] border border-border/60 bg-card/95 p-3 shadow-black/15 shadow-xl backdrop-blur-sm">
+      <Handle type="source" position={Position.Right} className="!size-3 !border-2 !border-background !bg-blue-500" />
+      <Handle type="source" position={Position.Left} className="!size-3 !border-2 !border-background !bg-orange-500" />
       <div className="flex items-center gap-3">
         <Avatar size="lg">
           <AvatarFallback>{data.agent.slice(0, 1)}</AvatarFallback>
@@ -140,37 +138,33 @@ const nodeTypes = {
 
 function getAgentPosition(index: number) {
   const presets = [
-    { x: 30, y: 60 },
-    { x: 50, y: 330 },
-    { x: 720, y: 110 },
-    { x: 740, y: 360 },
-    { x: 280, y: 520 },
+    { x: 80, y: 90 },
+    { x: 110, y: 360 },
+    { x: 860, y: 120 },
+    { x: 820, y: 380 },
+    { x: 470, y: 560 },
   ];
 
-  return presets[index] ?? { x: 60 + index * 24, y: 80 + index * 48 };
+  return presets[index] ?? { x: 120 + index * 26, y: 110 + index * 56 };
 }
 
-function buildFlow(
+function buildNodes(
   workspace: ProjectWorkspaceData,
   draftNotebook: string,
   notebookSaving: boolean,
   onNotebookChange: (value: string) => void,
   onNotebookSave: () => void,
-) {
+): Array<Node<NotebookNodeData | AgentNodeData>> {
   const notebookNode: Node<NotebookNodeData> = {
     id: "project-notebook",
     type: "notebook",
-    position: { x: 320, y: 130 },
-    draggable: false,
-    selectable: false,
+    position: { x: 420, y: 160 },
     data: {
       title: workspace.notebook ? workspace.notebook.title : `${workspace.project.name} notebook`,
       content: draftNotebook,
       updatedAt: workspace.notebook ? workspace.notebook.updatedAt : null,
       onChange: onNotebookChange,
-      onSave: () => {
-        void onNotebookSave();
-      },
+      onSave: onNotebookSave,
       saving: notebookSaving,
     },
   };
@@ -190,28 +184,78 @@ function buildFlow(
     },
   }));
 
-  const edges: Edge[] = workspace.agents.map((agent, index) => ({
+  return [notebookNode, ...agentNodes];
+}
+
+function buildEdges(workspace: ProjectWorkspaceData): Edge[] {
+  return workspace.agents.map((agent, index) => ({
     id: `edge-${agent.id}`,
     source: agent.id,
-    target: notebookNode.id,
-    sourceHandle: "source",
-    targetHandle: "target",
+    target: "project-notebook",
     animated: agent.status === "ACTIVE",
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-      width: 18,
-      height: 18,
-    },
     style: {
       stroke: index % 2 === 0 ? "#2563eb" : "#f97316",
       strokeWidth: 2,
     },
   }));
+}
 
-  return {
-    nodes: [notebookNode, ...agentNodes],
-    edges,
-  };
+function ActivityDialog({ activity }: { activity: ProjectWorkspaceData["activity"] }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <History />
+          Activity
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Activity Log</DialogTitle>
+          <DialogDescription>Every notebook and agent-board update is recorded here.</DialogDescription>
+        </DialogHeader>
+        <ScrollArea className="h-[480px]">
+          <div className="flex flex-col gap-3 pr-2">
+            {activity.map((event) => (
+              <div key={event.id} className="rounded-xl border bg-muted/30 p-3">
+                <div className="flex items-start gap-3">
+                  <Avatar size="sm">
+                    <AvatarFallback>
+                      {(event.user.name || event.user.email || "U").slice(0, 1).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-medium text-sm">
+                        {event.user.name || event.user.email || "Unknown user"}
+                      </span>
+                      <Badge variant="outline" className="rounded-sm text-[10px]">
+                        {event.action}
+                      </Badge>
+                    </div>
+                    <div className="mt-1 text-muted-foreground text-xs">
+                      {formatDistanceToNow(new Date(event.createdAt), { addSuffix: true })}
+                    </div>
+                    {"agentLabel" in event.detail && typeof event.detail.agentLabel === "string" ? (
+                      <div className="mt-2 text-muted-foreground text-xs">Agent: {event.detail.agentLabel}</div>
+                    ) : null}
+                    {"label" in event.detail && typeof event.detail.label === "string" ? (
+                      <div className="mt-2 text-muted-foreground text-xs">Node: {event.detail.label}</div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {activity.length === 0 ? (
+              <div className="rounded-xl border border-dashed p-6 text-center text-muted-foreground text-sm">
+                No agent or notebook activity yet.
+              </div>
+            ) : null}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function EditProjectDialog({
@@ -245,7 +289,7 @@ function EditProjectDialog({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Pencil />
-          Edit Project
+          Edit
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl">
@@ -290,7 +334,7 @@ function EditProjectDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="project-branch">Default Branch</Label>
+              <Label htmlFor="project-branch">Default branch</Label>
               <Input
                 id="project-branch"
                 value={form.defaultBranch}
@@ -320,11 +364,11 @@ function EditProjectDialog({
         </div>
         <DialogFooter showCloseButton>
           <Button
+            disabled={pending}
             onClick={() => {
               onSubmit(form);
               setOpen(false);
             }}
-            disabled={pending}
           >
             {pending ? "Saving..." : "Save changes"}
           </Button>
@@ -363,7 +407,7 @@ function AddAgentDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Spawn agent node</DialogTitle>
-          <DialogDescription>Add another agent to this project's shared notebook workspace.</DialogDescription>
+          <DialogDescription>Add another agent to this project's shared workspace.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
           <div className="grid gap-2">
@@ -435,6 +479,23 @@ export function ProjectWorkspace({ initialWorkspace }: WorkspaceProps) {
   const [projectSaving, setProjectSaving] = useState(false);
   const [agentSaving, setAgentSaving] = useState(false);
 
+  const handleNotebookSave = useEffectEvent(() => {
+    void saveNotebook();
+  });
+
+  const baseNodes = useMemo(
+    () => buildNodes(workspace, notebookDraft, notebookSaving, setNotebookDraft, handleNotebookSave),
+    [workspace, notebookDraft, notebookSaving],
+  );
+  const baseEdges = useMemo(() => buildEdges(workspace), [workspace]);
+  const [nodes, setNodes, onNodesChange] = useNodesState(baseNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(baseEdges);
+
+  useEffect(() => {
+    setNodes(buildNodes(workspace, notebookDraft, notebookSaving, setNotebookDraft, handleNotebookSave));
+    setEdges(buildEdges(workspace));
+  }, [workspace, notebookDraft, notebookSaving, setNodes, setEdges]);
+
   async function refreshWorkspace() {
     const response = await fetch(`/api/projects/${encodeURIComponent(workspace.project.slug)}/workspace`, {
       method: "GET",
@@ -462,7 +523,7 @@ export function ProjectWorkspace({ initialWorkspace }: WorkspaceProps) {
         },
         body: JSON.stringify({
           content: notebookDraft,
-          title: workspace.notebook?.title ?? `${workspace.project.name} notebook`,
+          title: workspace.notebook ? workspace.notebook.title : `${workspace.project.name} notebook`,
         }),
       });
 
@@ -607,156 +668,77 @@ export function ProjectWorkspace({ initialWorkspace }: WorkspaceProps) {
         }),
       });
     } catch {
-      // Keep dragging optimistic; the next refresh will reconcile.
+      // Keep dragging optimistic; refresh will reconcile later.
     }
   }
 
-  const handleNotebookSave = () => {
-    void saveNotebook();
-  };
-
-  const flow = buildFlow(workspace, notebookDraft, notebookSaving, setNotebookDraft, handleNotebookSave);
-
   return (
     <ReactFlowProvider>
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
-        <section className="flex min-h-[820px] flex-col overflow-hidden rounded-2xl border bg-card shadow-xs">
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b px-5 py-4">
-            <div className="min-w-0">
+      <section className="relative h-[calc(100vh-var(--dashboard-header-height)-3rem)] overflow-hidden rounded-[28px] border bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.08),_transparent_28%),radial-gradient(circle_at_right,_rgba(249,115,22,0.08),_transparent_24%),linear-gradient(180deg,rgba(15,23,42,0.04),rgba(15,23,42,0.02))] shadow-xs">
+        <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-4 p-5">
+          <div className="flex min-w-0 items-start gap-3">
+            <Button variant="outline" size="icon-sm" asChild>
+              <Link href="/dashboard/projects">
+                <ChevronLeft />
+              </Link>
+            </Button>
+            <div className="rounded-2xl border bg-card/90 px-4 py-3 shadow-lg backdrop-blur-sm">
               <div className="flex items-center gap-2">
+                <div className="truncate font-medium">{workspace.project.slug}</div>
                 <Badge variant="outline">{workspace.project.status}</Badge>
-                <Badge variant="outline">{workspace.agents.length} agents</Badge>
               </div>
-              <h1 className="mt-2 text-2xl tracking-tight">{workspace.project.name}</h1>
-              <p className="mt-1 max-w-3xl text-muted-foreground text-sm">
-                {workspace.project.description ||
-                  "No project description yet. Use the shared notebook to capture the working context for all agents."}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <AddAgentDialog onSubmit={createAgent} pending={agentSaving} />
-              <EditProjectDialog onSubmit={updateProject} pending={projectSaving} project={workspace.project} />
-              <Button variant="destructive" size="sm" onClick={deleteProject}>
-                <Trash2 />
-                Delete
-              </Button>
-            </div>
-          </div>
-
-          <div className="relative flex-1 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.08),_transparent_28%),radial-gradient(circle_at_right,_rgba(249,115,22,0.08),_transparent_24%)]">
-            <ReactFlow
-              nodes={flow.nodes}
-              edges={flow.edges}
-              nodeTypes={nodeTypes}
-              fitView
-              fitViewOptions={{ padding: 0.18 }}
-              onNodeDragStop={(_, node) => {
-                void persistAgentPosition(node);
-              }}
-              proOptions={{ hideAttribution: true }}
-            >
-              <Background gap={24} size={1} color="rgba(148,163,184,0.18)" />
-              <Controls />
-              <MiniMap pannable zoomable nodeBorderRadius={16} />
-            </ReactFlow>
-          </div>
-        </section>
-
-        <aside className="flex flex-col gap-4">
-          <div className="rounded-2xl border bg-card p-4 shadow-xs">
-            <div className="flex items-center gap-2 font-medium">
-              <Workflow className="size-4 text-muted-foreground" />
-              Project controls
-            </div>
-            <div className="mt-4 grid gap-3 text-sm">
-              <div className="rounded-xl border bg-muted/40 p-3">
-                <div className="text-muted-foreground text-xs">Repo</div>
-                <div className="mt-1 break-all">{workspace.project.repoUrl || "Not connected"}</div>
-              </div>
-              <div className="rounded-xl border bg-muted/40 p-3">
-                <div className="text-muted-foreground text-xs">Default branch</div>
-                <div className="mt-1 flex items-center gap-2">
-                  <GitBranch className="size-4 text-muted-foreground" />
-                  {workspace.project.defaultBranch}
-                </div>
-              </div>
-              <div className="rounded-xl border bg-muted/40 p-3">
-                <div className="text-muted-foreground text-xs">Notebook</div>
-                <div className="mt-1">
-                  {workspace.notebook
-                    ? `Last touched ${formatDistanceToNow(new Date(workspace.notebook.updatedAt), { addSuffix: true })}`
-                    : "Not created yet"}
-                </div>
+              <div className="mt-1 text-muted-foreground text-sm">
+                {workspace.project.description || "Shared project workspace"}
               </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border bg-card shadow-xs">
-            <div className="flex items-center gap-2 border-b px-4 py-3 font-medium">
-              <History className="size-4 text-muted-foreground" />
-              Activity Log
-            </div>
-            <ScrollArea className="h-[470px]">
-              <div className="flex flex-col gap-3 p-4">
-                {workspace.activity.map((event) => (
-                  <div key={event.id} className="rounded-xl border bg-muted/30 p-3">
-                    <div className="flex items-start gap-3">
-                      <Avatar size="sm">
-                        <AvatarFallback>
-                          {(event.user.name || event.user.email || "U").slice(0, 1).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="truncate font-medium text-sm">
-                            {event.user.name || event.user.email || "Unknown user"}
-                          </span>
-                          <Badge variant="outline" className="rounded-sm text-[10px]">
-                            {event.action}
-                          </Badge>
-                        </div>
-                        <div className="mt-1 text-muted-foreground text-xs">
-                          {formatDistanceToNow(new Date(event.createdAt), { addSuffix: true })}
-                        </div>
-                        {"agentLabel" in event.detail && typeof event.detail.agentLabel === "string" ? (
-                          <div className="mt-2 text-muted-foreground text-xs">Agent: {event.detail.agentLabel}</div>
-                        ) : null}
-                        {"label" in event.detail && typeof event.detail.label === "string" ? (
-                          <div className="mt-2 text-muted-foreground text-xs">Node: {event.detail.label}</div>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {workspace.activity.length === 0 ? (
-                  <div className="rounded-xl border border-dashed p-6 text-center text-muted-foreground text-sm">
-                    No agent or notebook activity yet.
-                  </div>
-                ) : null}
-              </div>
-            </ScrollArea>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Badge variant="outline" className="bg-card/80 backdrop-blur-sm">
+              {workspace.agents.length} agents
+            </Badge>
+            <AddAgentDialog onSubmit={createAgent} pending={agentSaving} />
+            <ActivityDialog activity={workspace.activity} />
+            <EditProjectDialog onSubmit={updateProject} pending={projectSaving} project={workspace.project} />
+            <Button variant="destructive" size="sm" onClick={deleteProject}>
+              <Trash2 />
+              Delete
+            </Button>
           </div>
+        </div>
 
-          <div className="rounded-2xl border bg-card p-4 shadow-xs">
-            <div className="flex items-center gap-2 font-medium">
+        <div className="absolute inset-0 pt-24">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            fitView
+            fitViewOptions={{ padding: 0.18 }}
+            onNodeDragStop={(_, node) => {
+              void persistAgentPosition(node);
+            }}
+            proOptions={{ hideAttribution: true }}
+          >
+            <Background gap={24} size={1} color="rgba(148,163,184,0.18)" />
+            <Controls />
+            <MiniMap pannable zoomable nodeBorderRadius={18} />
+          </ReactFlow>
+        </div>
+
+        <div className="pointer-events-none absolute bottom-5 left-5 z-20">
+          <div className="pointer-events-auto rounded-2xl border bg-card/90 px-4 py-3 shadow-lg backdrop-blur-sm">
+            <div className="flex items-center gap-2 font-medium text-sm">
               <FilePenLine className="size-4 text-muted-foreground" />
-              Agent usage
+              One shared notebook per project
             </div>
-            <div className="mt-3 text-muted-foreground text-sm">
-              Agents can create this project, read the shared notebook, update it through MCP, and their edits will be
-              written into the activity log here.
-            </div>
-            <div className="mt-3 flex flex-col gap-2">
-              <Button variant="outline" className="justify-start" asChild>
-                <Link href="/dashboard/docs">Open docs</Link>
-              </Button>
-              <Button variant="outline" className="justify-start" asChild>
-                <Link href="/dashboard/projects">Back to projects</Link>
-              </Button>
+            <div className="mt-1 text-muted-foreground text-xs">
+              Agents can be many. The notebook is one. Every update is logged.
             </div>
           </div>
-        </aside>
-      </div>
+        </div>
+      </section>
     </ReactFlowProvider>
   );
 }
