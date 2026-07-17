@@ -11,6 +11,7 @@ export type CreateProjectInput = {
   name: string;
   repoLocalPath?: string;
   repoUrl?: string;
+  reuseExistingProject?: boolean;
   slug?: string;
 };
 
@@ -384,6 +385,28 @@ export async function createProject(input: CreateProjectInput, actorId?: string)
 
   if (!baseSlug) {
     throw new Error("Project slug could not be generated.");
+  }
+
+  if (input.reuseExistingProject) {
+    const accessibleProject = await prisma.project.findFirst({
+      where: {
+        slug: baseSlug,
+        ...(buildProjectAccessWhere(actorId) ?? {}),
+      },
+    });
+
+    if (accessibleProject) {
+      return accessibleProject;
+    }
+
+    const existingProject = await prisma.project.findUnique({
+      where: { slug: baseSlug },
+      select: { id: true },
+    });
+
+    if (existingProject) {
+      throw new Error("Another project already uses that slug.");
+    }
   }
 
   let slug = baseSlug;

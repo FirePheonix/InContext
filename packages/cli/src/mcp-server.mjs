@@ -386,7 +386,7 @@ export async function startLocalMcpServer(options = {}) {
     "create_project",
     {
       title: "Create project",
-      description: "Create a new project in the signed-in InContext workspace.",
+      description: "Create a new project in the signed-in InContext workspace when project creation is enabled.",
       inputSchema: {
         name: z.string(),
         slug: z.string().optional(),
@@ -401,14 +401,23 @@ export async function startLocalMcpServer(options = {}) {
     async (input) => {
       const config = await loadConfig();
 
-      return textResult(
-        await apiRequest({
-          config,
-          path: "/api/projects",
-          method: "POST",
-          body: input,
-        }),
-      );
+      if (!options.allowProjectCreate) {
+        throw new Error(
+          "Project creation is disabled for this MCP server. Restart `incontext mcp serve --allow-project-create` to allow it.",
+        );
+      }
+
+      const created = await apiRequest({
+        config,
+        path: "/api/projects",
+        method: "POST",
+        body: {
+          ...input,
+          reuseExistingProject: true,
+        },
+      });
+
+      return textResult(created);
     },
   );
 

@@ -44,11 +44,15 @@ Usage:
   incontext resume <hash>
   incontext export --output <path> [--project <slug>]
   incontext import --file <path> [--project <slug>] [--mode <new|merge>]
-  incontext mcp serve [--agent <codex|claude|cursor|other>] [--label <name>]
+  incontext mcp serve [--agent <codex|claude|cursor|other>] [--label <name>] [--allow-project-create]
 
 Config path:
   ${getConfigPath()}
 `);
+}
+
+function isEnabledFlag(value) {
+  return value === true || value === "true";
 }
 
 async function openBrowser(url) {
@@ -517,6 +521,7 @@ async function commandMcpServe(args) {
   const { startLocalMcpServer } = await import("./mcp-server.mjs");
   const rawAgent = getStringFlag(args, "agent");
   const label = getStringFlag(args, "label");
+  const allowProjectCreate = isEnabledFlag(args.flags["allow-project-create"]);
 
   let agent = "CODEX";
 
@@ -533,6 +538,7 @@ async function commandMcpServe(args) {
   await startLocalMcpServer({
     agent,
     label,
+    allowProjectCreate,
   });
 }
 

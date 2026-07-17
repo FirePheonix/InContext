@@ -52,6 +52,7 @@ incontext resume <hash>
 incontext export --output ./project.json
 incontext import --file ./project.json
 incontext mcp serve
+incontext mcp serve --allow-project-create
 ```
 
 ## Agent workflow
@@ -61,6 +62,8 @@ incontext mcp serve
 3. Save handoffs and resume via hashes.
 4. Start `incontext mcp serve`.
 5. Point Codex, Claude, Cursor, or another stdio MCP client at the local process.
+
+Use `--allow-project-create` only when you want that local agent session to create a missing project instead of failing closed.
 
 ## One-command IDE setup
 

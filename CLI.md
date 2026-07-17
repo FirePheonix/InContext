@@ -54,6 +54,7 @@ incontext resume <hash>
 incontext export --output ./project.json
 incontext import --file ./project.json
 incontext mcp serve
+incontext mcp serve --allow-project-create
 ```
 
 ## Typical flow
@@ -109,6 +110,8 @@ This restores the active project locally and prints the saved handoff plus recen
 incontext mcp serve
 ```
 
+Pass `--allow-project-create` only when the local agent is allowed to create a project that does not already exist.
+
 ## Copyable MCP configs
 
 Use this for Codex, Claude Code, or Cursor with `npx`:
@@ -145,7 +148,7 @@ npx incontext-cli login --app-url https://your-vercel-domain
 npx incontext-cli projects
 npx incontext-cli project link <your-project-slug>
 npx incontext-cli status
-npx incontext-cli mcp serve
+npx incontext-cli mcp serve --allow-project-create
 ```
 
 ## IDE install flow

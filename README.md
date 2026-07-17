@@ -162,6 +162,8 @@ incontext view
 incontext mcp serve
 ```
 
+Only add `--allow-project-create` if that agent session should be able to create a missing project.
+
 Optional health and install checks:
 
 ```bash
