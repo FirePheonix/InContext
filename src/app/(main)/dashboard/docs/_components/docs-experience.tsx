@@ -219,13 +219,13 @@ function Section({
 
 function CommandLines({ lines }: { lines: readonly string[] }) {
   return (
-    <div className="space-y-1 border-l-2 border-border pl-3">
+    <ul className="space-y-1 border-l-2 border-border pl-3">
       {lines.map((line) => (
-        <div key={line} className="font-mono text-[11px] leading-5 text-foreground md:text-xs">
-          {line}
-        </div>
+        <li key={line} className="text-xs leading-5 text-muted-foreground md:text-sm">
+          - <code className="font-mono text-foreground">{line}</code>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
