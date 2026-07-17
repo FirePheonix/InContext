@@ -127,6 +127,7 @@ The preferred individual-user workflow is:
 1. Login from terminal:
 
 ```bash
+npx incontext-cli install --ide codex
 npm run cli -- login --app-url https://your-vercel-domain
 ```
 
@@ -152,6 +153,13 @@ incontext resume <hash>
 
 ```bash
 incontext mcp serve
+```
+
+Optional health and install checks:
+
+```bash
+incontext status
+incontext doctor
 ```
 
 6. Open the shared workspace for a project:

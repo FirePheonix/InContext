@@ -34,8 +34,12 @@ incontext help
 ## Core commands
 
 ```bash
+incontext install --ide codex
+incontext uninstall --ide codex
 incontext login --app-url https://your-vercel-domain
 incontext whoami
+incontext status
+incontext doctor
 incontext projects
 incontext current
 incontext project link <project-slug>
@@ -51,6 +55,28 @@ incontext mcp serve
 3. Save handoffs and resume via hashes.
 4. Start `incontext mcp serve`.
 5. Point Codex, Claude, Cursor, or another stdio MCP client at the local process.
+
+## One-command IDE setup
+
+```bash
+incontext install --ide codex
+incontext install --ide cursor
+incontext install --ide claude
+incontext install --ide all
+```
+
+Remove the MCP wiring later:
+
+```bash
+incontext uninstall --ide codex
+```
+
+Inspect local health:
+
+```bash
+incontext status
+incontext doctor
+```
 
 The project workspace model is:
 

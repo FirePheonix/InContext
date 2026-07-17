@@ -7,7 +7,9 @@ import { apiRequest } from "./api.mjs";
 import { getStringFlag, parseArgs } from "./args.mjs";
 import { findProjectState, getConfigPath, loadConfig, saveConfig, upsertProjectState } from "./config.mjs";
 import { getGitBranch, getGitRemoteUrl, getGitRepoRoot } from "./git.mjs";
+import { getInstallCommandPreview, installIdeMcpTargets, uninstallIdeMcpTargets } from "./install.mjs";
 import { readContentInput } from "./io.mjs";
+import { collectLocalStatus, printDoctor, printStatus, runDoctorChecks } from "./status.mjs";
 
 const execAsync = promisify(exec);
 
@@ -16,9 +18,13 @@ function printHelp() {
 
 Usage:
   incontext login --app-url <url> [--label <name>]
+  incontext install --ide <codex|cursor|claude|all>
+  incontext uninstall --ide <codex|cursor|claude|all>
   incontext whoami
   incontext projects
   incontext current
+  incontext status [--json]
+  incontext doctor [--json]
   incontext project link <project-slug>
   incontext handoff save --title <title> [--content <text> | --file <path>]
   incontext resume <hash>
@@ -157,6 +163,39 @@ async function commandWhoAmI() {
   );
 }
 
+async function commandInstall(args) {
+  const ide = getStringFlag(args, "ide");
+
+  if (!ide) {
+    throw new Error("Usage: incontext install --ide <codex|cursor|claude|all>");
+  }
+
+  const results = await installIdeMcpTargets(ide);
+  const preview = getInstallCommandPreview();
+
+  for (const result of results) {
+    console.log(`Installed InContext MCP for ${result.ide} at ${result.path}`);
+
+    if (result.ide === "codex") {
+      console.log(preview.codex.section.trim());
+    }
+  }
+}
+
+async function commandUninstall(args) {
+  const ide = getStringFlag(args, "ide");
+
+  if (!ide) {
+    throw new Error("Usage: incontext uninstall --ide <codex|cursor|claude|all>");
+  }
+
+  const results = await uninstallIdeMcpTargets(ide);
+
+  for (const result of results) {
+    console.log(`${result.removed ? "Removed" : "No InContext entry found for"} ${result.ide} (${result.path})`);
+  }
+}
+
 async function commandProjects() {
   const config = await loadConfig();
   const result = await apiRequest({
@@ -165,6 +204,28 @@ async function commandProjects() {
   });
 
   console.log(JSON.stringify(result.projects, null, 2));
+}
+
+async function commandStatus(args) {
+  const status = await collectLocalStatus();
+
+  if (args.flags.json) {
+    console.log(JSON.stringify(status, null, 2));
+    return;
+  }
+
+  printStatus(status);
+}
+
+async function commandDoctor(args) {
+  const result = await runDoctorChecks();
+
+  if (args.flags.json) {
+    console.log(JSON.stringify(result, null, 2));
+    return;
+  }
+
+  printDoctor(result);
 }
 
 async function commandCurrent() {
@@ -361,8 +422,28 @@ async function main() {
     return;
   }
 
+  if (command === "install") {
+    await commandInstall(args);
+    return;
+  }
+
+  if (command === "uninstall") {
+    await commandUninstall(args);
+    return;
+  }
+
   if (command === "whoami") {
     await commandWhoAmI();
+    return;
+  }
+
+  if (command === "status") {
+    await commandStatus(args);
+    return;
+  }
+
+  if (command === "doctor") {
+    await commandDoctor(args);
     return;
   }
 

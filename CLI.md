@@ -36,8 +36,12 @@ incontext help
 ## Commands
 
 ```bash
+incontext install --ide codex
+incontext uninstall --ide codex
 incontext login --app-url https://your-vercel-domain
 incontext whoami
+incontext status
+incontext doctor
 incontext projects
 incontext current
 incontext project link <project-slug>
@@ -130,10 +134,37 @@ If `incontext-cli` is installed globally:
 Recommended first-run sequence:
 
 ```bash
+npx incontext-cli install --ide codex
 npx incontext-cli login --app-url https://your-vercel-domain
 npx incontext-cli projects
 npx incontext-cli project link <your-project-slug>
+npx incontext-cli status
 npx incontext-cli mcp serve
+```
+
+## IDE install flow
+
+Wire InContext into Codex, Cursor, or Claude Code without manually editing config files:
+
+```bash
+incontext install --ide codex
+incontext install --ide cursor
+incontext install --ide claude
+incontext install --ide all
+```
+
+Remove the local MCP wiring:
+
+```bash
+incontext uninstall --ide codex
+```
+
+Inspect local health:
+
+```bash
+incontext status
+incontext doctor
+incontext doctor --json
 ```
 
 ## Local MCP tools
