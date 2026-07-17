@@ -29,12 +29,22 @@ const nextConfig = {
     return [
       {
         source: "/dashboard",
-        destination: "/dashboard/productivity",
+        destination: "/dashboard/overview",
+        permanent: false,
+      },
+      {
+        source: "/dashboard/productivity",
+        destination: "/dashboard/overview",
+        permanent: false,
+      },
+      {
+        source: "/dashboard/users",
+        destination: "/dashboard/projects",
         permanent: false,
       },
       ...legacyDashboardRoutes.map((source) => ({
         source,
-        destination: "/dashboard/productivity",
+        destination: "/dashboard/overview",
         permanent: false,
       })),
     ];

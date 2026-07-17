@@ -1,11 +1,5 @@
-import { getProjectRows } from "@/lib/projects";
-import { requireCurrentSessionUser } from "@/lib/session-user";
+import { redirect } from "next/navigation";
 
-import { Users } from "./_components/users";
-
-export default async function Page() {
-  const user = await requireCurrentSessionUser();
-  const projects = await getProjectRows(user.id);
-
-  return <Users users={projects} />;
+export default function Page() {
+  redirect("/dashboard/projects");
 }

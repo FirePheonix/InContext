@@ -159,7 +159,7 @@ const seedProjects: SeedProject[] = [
         message: "Persist dashboard project registry metrics",
         status: "SUCCEEDED",
         commitSha: "4ca57f1",
-        filesJson: JSON.stringify(["src/app/(main)/dashboard/productivity/page.tsx", "src/lib/productivity.ts"]),
+        filesJson: JSON.stringify(["src/app/(main)/dashboard/overview/page.tsx", "src/lib/productivity.ts"]),
         tokenLabel: "Frontend GitHub App",
         actorEmail: "platform@incontext.local",
         pullRequestUrl: "https://github.com/org/frontend-dashboard/pull/18",

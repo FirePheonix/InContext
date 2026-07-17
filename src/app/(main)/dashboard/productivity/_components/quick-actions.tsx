@@ -6,7 +6,7 @@ import { CreateProjectDialog } from "@/app/(main)/dashboard/users/_components/cr
 import { Button } from "@/components/ui/button";
 
 const quickActions = [
-  { label: "Projects", icon: Boxes, href: "/dashboard/users" },
+  { label: "Projects", icon: Boxes, href: "/dashboard/projects" },
   { label: "Architecture", icon: Server, href: "/dashboard/infrastructure" },
   { label: "Agent Access", icon: LockKeyhole, href: "/dashboard/roles" },
 ] as const;

@@ -14,6 +14,8 @@ export async function createProjectAction(input: CreateProjectInput) {
 
   const project = await createProject(input, session.user.id);
 
+  revalidatePath("/dashboard/projects");
+  revalidatePath("/dashboard/overview");
   revalidatePath("/dashboard/users");
   revalidatePath("/dashboard/productivity");
   revalidatePath("/dashboard/infrastructure");

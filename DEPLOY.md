@@ -160,7 +160,7 @@ That local MCP server reads hosted project context but executes git on the user'
 ## 8. Post-deploy checks
 
 - Google login works on the Vercel domain
-- `/dashboard/productivity` loads data
+- `/dashboard/overview` loads data
 - authenticated project APIs respond
 - Railway `/health` returns `{ "ok": true }`
 - MCP clients can call Railway with the bearer token
