@@ -1,4 +1,4 @@
-import { LayoutDashboard, Lock, type LucideIcon, Server, Users } from "lucide-react";
+import { BookOpenText, LayoutDashboard, Lock, type LucideIcon, Server, Users } from "lucide-react";
 
 export type NavBadge = "new" | "soon";
 
@@ -67,6 +67,18 @@ export const sidebarItems: NavGroup[] = [
         url: "/dashboard/roles",
         icon: Lock,
         badge: "new",
+      },
+    ],
+  },
+  {
+    id: 2,
+    label: "Docs",
+    items: [
+      {
+        id: "docs",
+        title: "Documentation",
+        url: "/dashboard/docs",
+        icon: BookOpenText,
       },
     ],
   },
