@@ -1,12 +1,13 @@
 import Link from "next/link";
 
-import { Boxes, FilePlus2, LockKeyhole, Server } from "lucide-react";
+import { Boxes, LockKeyhole, RadioTower, Server } from "lucide-react";
 
 import { CreateProjectDialog } from "@/app/(main)/dashboard/users/_components/create-project-dialog";
 import { Button } from "@/components/ui/button";
 
 const quickActions = [
   { label: "Projects", icon: Boxes, href: "/dashboard/projects" },
+  { label: "Operations", icon: RadioTower, href: "/dashboard/operations" },
   { label: "Architecture", icon: Server, href: "/dashboard/infrastructure" },
   { label: "Agent Access", icon: LockKeyhole, href: "/dashboard/roles" },
 ] as const;

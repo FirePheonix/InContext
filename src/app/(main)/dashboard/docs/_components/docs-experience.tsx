@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 const sidebarItems = [
   { id: "start-here", label: "Start here" },
   { id: "install-cli", label: "Install the CLI" },
+  { id: "operations", label: "Operate locally" },
   { id: "link-and-resume", label: "Link and resume" },
   { id: "clients", label: "Connect clients" },
   { id: "workspace-model", label: "Workspace model" },
@@ -49,9 +50,9 @@ const heroCards = [
     icon: Bot,
   },
   {
-    title: "Resume shared context",
+    title: "Operate and inspect",
     description:
-      "Save handoffs, restore via resume hashes, and keep a single project notebook with attributable agent activity.",
+      "Run `status`, `doctor`, `view`, observation capture, and export/import without opening the hosted app first.",
     icon: Sparkles,
   },
 ] as const;
@@ -90,6 +91,32 @@ const workflowSteps = [
     code: [
       'incontext handoff save --title "Session handoff" --content "What changed, what is blocked, what is next."',
       "incontext resume <hash>",
+    ],
+  },
+] as const;
+
+const operationsSteps = [
+  {
+    title: "Health and install checks",
+    body: "Use these commands when the bridge is not behaving or before you hand the repo to a new machine.",
+    code: ["incontext status", "incontext doctor", "incontext install --ide codex", "incontext install --ide all"],
+  },
+  {
+    title: "Draft capture before notebook promotion",
+    body: "Capture observations without mutating the shared notebook immediately, then promote the useful ones later.",
+    code: [
+      'incontext capture --title "Repo insight" --content "This should become part of the shared context later."',
+      "incontext observations --status DRAFT",
+      "incontext observation promote <observation-id>",
+    ],
+  },
+  {
+    title: "Read-only viewer and portability",
+    body: "Open a local viewer for the current project or move the project snapshot between machines.",
+    code: [
+      "incontext view",
+      "incontext export --project <project-slug> --output ./project.json",
+      "incontext import --file ./project.json --mode new",
     ],
   },
 ] as const;
@@ -394,6 +421,27 @@ export function DocsExperience() {
 
             <section className="space-y-10">
               <SectionTitle
+                id="operations"
+                badge="Local Operations"
+                title="Operate, inspect, capture, and move projects"
+                description="InContext should stay useful even when the hosted app is not the main thing you have open. These commands cover install health, draft capture, read-only viewing, and snapshot portability."
+              />
+
+              <div className="grid gap-5 xl:grid-cols-3">
+                {operationsSteps.map((step) => (
+                  <div key={step.title} className="rounded-[28px] border border-zinc-800 bg-zinc-900/80 p-6">
+                    <div className="space-y-3">
+                      <h3 className="text-2xl font-semibold text-white">{step.title}</h3>
+                      <p className="text-base leading-8 text-zinc-400">{step.body}</p>
+                    </div>
+                    <CodePanel code={step.code} className="mt-5" />
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="space-y-10">
+              <SectionTitle
                 id="link-and-resume"
                 badge="Project Workflow"
                 title="Link, hand off, and resume"
@@ -526,6 +574,7 @@ export function DocsExperience() {
                   <CodePanel
                     code={[
                       "npm install -g incontext-cli",
+                      "incontext install --ide codex",
                       "incontext login --app-url https://in-context-gamma.vercel.app",
                       "incontext projects",
                       "incontext project link <project-slug>",

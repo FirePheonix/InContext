@@ -1,4 +1,4 @@
-import { BookOpenText, LayoutDashboard, Lock, type LucideIcon, Server, Users } from "lucide-react";
+import { BookOpenText, LayoutDashboard, Lock, type LucideIcon, RadioTower, Server, Users } from "lucide-react";
 
 export type NavBadge = "new" | "soon";
 
@@ -54,6 +54,12 @@ export const sidebarItems: NavGroup[] = [
         title: "Projects",
         url: "/dashboard/projects",
         icon: Users,
+      },
+      {
+        id: "operations",
+        title: "Operations",
+        url: "/dashboard/operations",
+        icon: RadioTower,
       },
       {
         id: "infrastructure",

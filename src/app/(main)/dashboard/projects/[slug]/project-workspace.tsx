@@ -22,7 +22,7 @@ import {
   useNodesState,
 } from "@xyflow/react";
 import { formatDistanceToNow } from "date-fns";
-import { ChevronLeft, FilePenLine, History, Pencil, Plus, Save, Trash2 } from "lucide-react";
+import { ChevronLeft, Eye, FilePenLine, History, Pencil, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -249,6 +249,50 @@ function ActivityDialog({ activity }: { activity: ProjectWorkspaceData["activity
             {activity.length === 0 ? (
               <div className="rounded-xl border border-dashed p-6 text-center text-muted-foreground text-sm">
                 No agent or notebook activity yet.
+              </div>
+            ) : null}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ObservationDialog({ observations }: { observations: ProjectWorkspaceData["observations"] }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Eye />
+          Observations
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Captured observations</DialogTitle>
+          <DialogDescription>Draft capture stays here until it is promoted into the shared notebook.</DialogDescription>
+        </DialogHeader>
+        <ScrollArea className="h-[420px]">
+          <div className="flex flex-col gap-3 pr-2">
+            {observations.map((observation) => (
+              <div key={observation.id} className="rounded-xl border bg-muted/30 p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={observation.status === "PROMOTED" ? "default" : "outline"}>
+                    {observation.status}
+                  </Badge>
+                  {observation.sourceAgent ? <Badge variant="outline">{observation.sourceAgent}</Badge> : null}
+                </div>
+                <div className="mt-3 font-medium text-sm">{observation.title}</div>
+                <div className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{observation.content}</div>
+                <div className="mt-3 text-xs text-muted-foreground">
+                  {observation.author?.name || observation.author?.email || observation.sourceLabel || "Unknown author"}{" "}
+                  · {formatDistanceToNow(new Date(observation.updatedAt), { addSuffix: true })}
+                </div>
+              </div>
+            ))}
+            {observations.length === 0 ? (
+              <div className="rounded-xl border border-dashed p-6 text-center text-muted-foreground text-sm">
+                No draft observations yet. Use `incontext capture` or the local MCP observation tools.
               </div>
             ) : null}
           </div>
@@ -697,7 +741,11 @@ export function ProjectWorkspace({ initialWorkspace }: WorkspaceProps) {
             <Badge variant="outline" className="bg-card/80 backdrop-blur-sm">
               {workspace.agents.length} agents
             </Badge>
+            <Badge variant="outline" className="bg-card/80 backdrop-blur-sm">
+              {workspace.observations.length} observations
+            </Badge>
             <AddAgentDialog onSubmit={createAgent} pending={agentSaving} />
+            <ObservationDialog observations={workspace.observations} />
             <ActivityDialog activity={workspace.activity} />
             <EditProjectDialog onSubmit={updateProject} pending={projectSaving} project={workspace.project} />
             <Button variant="destructive" size="sm" onClick={deleteProject}>
