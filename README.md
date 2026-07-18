@@ -1,3 +1,7 @@
+<img width="760" height="710" alt="image" src="https://github.com/user-attachments/assets/497ed445-4bbd-4500-817e-b6606072c882" />
+
+
+
 # InContext
 
 InContext is a project-native memory and execution layer for coding agents. It gives Codex, Claude, Cursor, or any MCP-compatible client a shared project registry, portable summaries, architecture context, local resume hashes, local git-backed execution, and auditable commit history.
