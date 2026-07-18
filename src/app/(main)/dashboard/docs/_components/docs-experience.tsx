@@ -219,26 +219,151 @@ function Section({
 
 function CommandLines({ lines }: { lines: readonly string[] }) {
   return (
-    <ul className="space-y-1 border-l-2 border-border pl-3">
-      {lines.map((line) => (
-        <li key={line} className="text-xs leading-5 text-muted-foreground md:text-sm">
-          - <code className="font-mono text-foreground">{line}</code>
-        </li>
-      ))}
-    </ul>
+    <MarkdownBlock
+      markdown={lines.map((line) => `- \`${line.replace(/`/g, "\\`")}\``).join("\n")}
+      className="border-l-2 border-border pl-3"
+    />
   );
 }
 
 function NoteLines({ notes }: { notes: readonly string[] }) {
   return (
-    <ul className="space-y-1">
-      {notes.map((note) => (
-        <li key={note} className="text-xs leading-5 text-muted-foreground">
-          {note}
-        </li>
-      ))}
-    </ul>
+    <MarkdownBlock markdown={notes.map((note) => `- ${note}`).join("\n")} className="space-y-1" />
   );
+}
+
+function MarkdownBlock({ className, markdown }: { className?: string; markdown: string }) {
+  const lines = markdown.split(/\r?\n/);
+  const nodes: ReactNode[] = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index].trimEnd();
+
+    if (!line) {
+      index += 1;
+      continue;
+    }
+
+    if (line.startsWith("### ")) {
+      nodes.push(
+        <h4 key={`h4-${index}`} className="text-xs font-semibold tracking-tight text-foreground md:text-sm">
+          {renderInlineMarkdown(line.slice(4))}
+        </h4>,
+      );
+      index += 1;
+      continue;
+    }
+
+    if (line.startsWith("## ")) {
+      nodes.push(
+        <h3 key={`h3-${index}`} className="text-sm font-semibold tracking-tight text-foreground md:text-base">
+          {renderInlineMarkdown(line.slice(3))}
+        </h3>,
+      );
+      index += 1;
+      continue;
+    }
+
+    if (line.startsWith("- ")) {
+      const items: string[] = [];
+
+      while (index < lines.length && lines[index].trim().startsWith("- ")) {
+        items.push(lines[index].trim().slice(2));
+        index += 1;
+      }
+
+      nodes.push(
+        <ul key={`ul-${index}`} className="space-y-1">
+          {items.map((item, itemIndex) => (
+            <li key={`${item}-${itemIndex}`} className="text-xs leading-5 text-muted-foreground md:text-sm">
+              {renderInlineMarkdown(item)}
+            </li>
+          ))}
+        </ul>,
+      );
+      continue;
+    }
+
+    if (/^\d+\.\s/.test(line)) {
+      const items: string[] = [];
+
+      while (index < lines.length && /^\d+\.\s/.test(lines[index].trim())) {
+        items.push(lines[index].trim().replace(/^\d+\.\s/, ""));
+        index += 1;
+      }
+
+      nodes.push(
+        <ol key={`ol-${index}`} className="space-y-1 pl-4">
+          {items.map((item, itemIndex) => (
+            <li key={`${item}-${itemIndex}`} className="text-xs leading-5 text-muted-foreground md:text-sm">
+              {renderInlineMarkdown(item)}
+            </li>
+          ))}
+        </ol>,
+      );
+      continue;
+    }
+
+    if (line.startsWith("```")) {
+      const codeLines: string[] = [];
+      index += 1;
+
+      while (index < lines.length && !lines[index].startsWith("```")) {
+        codeLines.push(lines[index]);
+        index += 1;
+      }
+
+      if (index < lines.length) {
+        index += 1;
+      }
+
+      nodes.push(
+        <pre
+          key={`pre-${index}`}
+          className="overflow-x-auto rounded-xl border border-border bg-muted/30 px-4 py-3 text-[11px] leading-5 text-foreground md:text-xs"
+        >
+          <code>{codeLines.join("\n")}</code>
+        </pre>,
+      );
+      continue;
+    }
+
+    nodes.push(
+      <p key={`p-${index}`} className="text-xs leading-5 text-muted-foreground md:text-sm">
+        {renderInlineMarkdown(line)}
+      </p>,
+    );
+    index += 1;
+  }
+
+  return <div className={className}>{nodes}</div>;
+}
+
+function renderInlineMarkdown(value: string) {
+  const segments: ReactNode[] = [];
+  const pattern = /`([^`]+)`/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(value)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push(value.slice(lastIndex, match.index));
+    }
+
+    segments.push(
+      <code key={`${match.index}-${match[1]}`} className="font-mono text-foreground">
+        {match[1]}
+      </code>,
+    );
+    lastIndex = pattern.lastIndex;
+  }
+
+  if (lastIndex < value.length) {
+    segments.push(value.slice(lastIndex));
+  }
+
+  return segments.length === 1 ? segments[0] : segments;
 }
 
 export function DocsExperience() {
