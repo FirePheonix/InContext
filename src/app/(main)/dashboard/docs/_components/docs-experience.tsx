@@ -220,7 +220,7 @@ function Section({
 function CommandLines({ lines }: { lines: readonly string[] }) {
   return (
     <MarkdownBlock
-      markdown={lines.map((line) => `- \`${line.replace(/`/g, "\\`")}\``).join("\n")}
+      markdown={`\`\`\`bash\n${lines.map((line) => line.replace(/`/g, "\\`")).join("\n")}\n\`\`\``}
       className="border-l-2 border-border pl-3"
     />
   );
@@ -323,7 +323,7 @@ function MarkdownBlock({ className, markdown }: { className?: string; markdown: 
           key={`pre-${index}`}
           className="overflow-x-auto rounded-xl border border-border bg-muted/30 px-4 py-3 text-[11px] leading-5 text-foreground md:text-xs"
         >
-          <code>{codeLines.join("\n")}</code>
+          <code className="font-mono">{codeLines.join("\n")}</code>
         </pre>,
       );
       continue;
