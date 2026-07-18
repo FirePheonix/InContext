@@ -308,7 +308,7 @@ This repo includes:
 
 ```text
 postinstall = prisma generate
-vercel-build = prisma generate && prisma migrate deploy && next build
+vercel-build = prisma generate && node ./src/scripts/prisma-migrate-deploy-safe.mjs && next build
 ```
 
 ## Current limitations

@@ -57,8 +57,10 @@ DIRECT_GIT_COMMITS_ENABLED="false"
 `npm run vercel-build` runs:
 
 ```text
-prisma generate && prisma migrate deploy && next build
+prisma generate && node ./src/scripts/prisma-migrate-deploy-safe.mjs && next build
 ```
+
+The migration step retries PostgreSQL advisory-lock timeouts a few times before failing the build.
 
 ## 3. OAuth providers
 
